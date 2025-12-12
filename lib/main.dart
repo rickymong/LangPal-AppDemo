@@ -48,15 +48,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
   String _currentPage = "Home";
   List<String> pages = ["Conversations", "Home", "Profile"];
-  final Map<String, GlobalKey<NavigatorState>> _navKeys = {
+  final Map<String, GlobalKey<NavigatorState>> _navKeys = { //names of screens in nav bar
     "Conversations": GlobalKey<NavigatorState>(),
     "Home": GlobalKey<NavigatorState>(),
     "Profile": GlobalKey<NavigatorState>(),
   };
   
   int _index = 1;
-  void _selectTab(String tabItem, int index) {
-    if(tabItem == _currentPage){
+  void _selectTab(String tabItem, int index) { //custom nav bar selecting method
+    if(tabItem == _currentPage){ //
       _navKeys[tabItem]?.currentState?.popUntil((route) => route.isFirst);
     }
     else{
@@ -94,7 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
           Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
+            children: <Widget>[ //List of current AI partners for languages being learned
               SizedBox(height: 10),
               Text(
                 "Your Conversations",
@@ -109,22 +109,23 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               Expanded(
                 child: ConversationsPage(
-                  aiList: user.conversations?.keys.toList() as List<AiPartner>
+                  aiList: user.conversations?.keys.toList() as List<AiPartner> //create a list of AI partners based on what languages the user is learning
                   ))
               
             ],
           ),
         ),
+        //establishes that the other nav bar pages exist -- this may be a poor way of doing so, I am open to revisiting this
           _buildNav("Conversations"),
          // _buildNav("Home"),
           _buildNav("Profile"),
         ]
       ),
     
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: BottomNavigationBar( //Custom nav bar
         type: BottomNavigationBarType.fixed,
         currentIndex: _index,
-        onTap: (int index) {_selectTab(pages[index], index); },
+        onTap: (int index) {_selectTab(pages[index], index); }, //directs user to new page
         items: [
           const BottomNavigationBarItem(
             icon: Icon(Icons.message, size: 25),

@@ -7,7 +7,7 @@ class User {
   List<String> languages;
   Map<AiPartner,List<String>>? conversations; //maps each user's AI partners to their coversations (stored in an ordered List)
   final DateTime createdAt;
-  String? profile_image_path;
+  String? profile_image_path; //currently locally stored -- should we store the profile picture on server side?
   User({
     required this.id,
     required this.email,

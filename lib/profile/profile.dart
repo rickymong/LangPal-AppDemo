@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 
+
 class Profile extends StatefulWidget {
   const Profile({super.key});
 
@@ -21,7 +22,7 @@ class _ProfileState extends State<Profile> {
   final ImagePicker imgPicker = ImagePicker(); //allows profile photo upload
   Future<dynamic> pickImage() async {
     final XFile? image = await imgPicker.pickImage(source: ImageSource.gallery); 
-    //In production, would assign this to a database so 
+    //In production, would upload this to a database so 
     //it doesn't depend on the user keeping the image 
 
     if(image != null) {
@@ -41,22 +42,17 @@ class _ProfileState extends State<Profile> {
     //load data from user state
     User user = context.watch<UserNotifier>().user!;
     String languages = "";
-    for(int i = 0; i < user.languages.length; i++){
+    for(int i = 0; i < user.languages.length; i++){ //Turn user's languages into a visual list -- How they are displayed should probably be changed
       if(i < user.languages.length - 1){
         languages += "${user.languages[i]} | ";
       }
       else{
-        languages = languages + user.languages[i];
+        languages = languages + user.languages[i]; //makes it so last item doesn't have '|'"
       }
     }
 
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text("Profile"),
-      //   centerTitle: true,
-      //   backgroundColor: Color.fromARGB(255, 7, 172, 190), //Theme.of(context).colorScheme.inversePrimary,
-      //   foregroundColor: Color.fromARGB(255, 42, 42, 42),
-      // ),
+
       body: SingleChildScrollView(
         child: Container(
           width: width,
@@ -70,7 +66,7 @@ class _ProfileState extends State<Profile> {
               // Profile image
               Consumer<UserNotifier>(
                 builder: (context, user, child) {  
-                  return GestureDetector(
+                  return GestureDetector( //tap profile picture to change
                     onTap: () async {
                       String? newImagePath = await pickImage() as String?;
                       user.changeProfilePicture(newImagePath);
@@ -89,14 +85,14 @@ class _ProfileState extends State<Profile> {
               ),
               SizedBox(height: height * 0.03),
 
-              // Editable Name
+              // Make name editable?
               Text(
                 user.name,
                 style: Theme.of(context).textTheme.headlineLarge,
               ),
               SizedBox(height: height * 0.02),
 
-              // Joined Date
+              // Joined Date - gotten from user state
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

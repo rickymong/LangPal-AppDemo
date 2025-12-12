@@ -8,14 +8,16 @@ import 'types/ai_partner.dart';
 
 class CustomNav extends StatelessWidget{
   final GlobalKey<NavigatorState> navKey;
-  final String tab;
+  final String tab; //name of screen to pass user to
   const CustomNav({super.key, required this.navKey, required this.tab});
   
   
 
   @override
   Widget build(BuildContext context) {
-        final ai = AiPartner(
+    
+    //Dummy AI partner data
+    final ai = AiPartner(
       name: "Sophia",
       id: "ai_001",
       language: "Spanish",
@@ -37,6 +39,7 @@ class CustomNav extends StatelessWidget{
     
     List<AiPartner> aiList = [ai, ai2,ai3];
 
+    //routes the user to the selected bottom nav bar tab
     Widget child = MyHomePage();
     if(tab == "Conversations")
       child = ConversationsPage(aiList: aiList,);

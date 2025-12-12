@@ -10,8 +10,10 @@ import '../types/chat_message.dart';
 import 'message_service.dart';
 
 
+//**READ ME **
+//this file contains multiple classes that comprise the chat logic -- feel free to separate into multiple files if this seems to big or confusing due to multiple classes
 
-class ChatContainer extends StatefulWidget {
+class ChatContainer extends StatefulWidget { //Container that holds the messages
   List<ChatMessage> messages;
    ChatContainer({
     super.key, 
@@ -78,9 +80,9 @@ void dispose(){
   }
 }
 
-class MessageBubble extends StatelessWidget {
+class MessageBubble extends StatelessWidget { //message UI
   final String message;
-  final bool isUser;
+  final bool isUser; //determines color and alignment of message bubble
 
   const MessageBubble({
     super.key,
@@ -129,8 +131,8 @@ class MessageBubble extends StatelessWidget {
   
 }
 
-class ChatInput extends StatefulWidget {
-  final AiPartner aiPartner;
+class ChatInput extends StatefulWidget { //Input box for chat
+  final AiPartner aiPartner; //Tracks what AI the user is talking with
   const ChatInput({Key? key, required this.aiPartner}) : super(key: key);
   
 
@@ -141,7 +143,6 @@ class _ChatInputState extends State<ChatInput> {
   
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
-  late final String fileContents;
 
   @override initState(){
     super.initState();
@@ -150,7 +151,7 @@ class _ChatInputState extends State<ChatInput> {
 
   Widget build(BuildContext context) {
     //String userId = context.read<UserNotifier>().user!.id;
-    User user = context.watch<UserNotifier>().user!;
+    User user = context.watch<UserNotifier>().user!; //gets user info - triggers refresh if state updates
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
       decoration: BoxDecoration(
@@ -185,7 +186,7 @@ class _ChatInputState extends State<ChatInput> {
             ),
           ),
           const SizedBox(width: 8.0),
-          CircleAvatar(
+          CircleAvatar(//send button
             backgroundColor: Color.fromARGB(255, 7, 172, 190),
             child: IconButton(
               icon: const Icon(Icons.send, color: Colors.white),
@@ -205,14 +206,14 @@ class _ChatInputState extends State<ChatInput> {
       ),
     );
   }
-  void _sendMessage(bool isUser, String text, String userId) {
+  void _sendMessage(bool isUser, String text, String userId) { //id generation needs to be made secure
     final ChatMessage message = ChatMessage(id: Random().nextInt(1000000000), userId: userId, aiID: widget.aiPartner.id, text: text, isFromUser: isUser, timestamp: DateTime.now());
-    //TODO: send to translation API
-    String responseText =  "My name is ${widget.aiPartner.name} -- ${message.text}";
-    MessageService().sendMessage(message);
-    //Would hypothetically send back an AI generated message to the user
+    //TODO: send message to AI and catch response - trigger waiting UI?
+    String responseText =  "My name is ${widget.aiPartner.name} -- ${message.text}"; //default dummy response
+    MessageService().sendMessage(message); //sends user's message to the UI
+ 
     ChatMessage response = ChatMessage(id: Random().nextInt(1000000000), userId: userId, aiID: widget.aiPartner.id, text: responseText, isFromUser: false, timestamp: DateTime.now());
-    MessageService().sendMessage(response);
+    MessageService().sendMessage(response); //sends AI's message to the UI
   }
 
   @override

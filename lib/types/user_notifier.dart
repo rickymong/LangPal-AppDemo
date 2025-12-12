@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'user.dart';
 import 'ai_partner.dart';
+
+//Notifier for managing state of user
+
 class UserNotifier extends ChangeNotifier{
    
   User? _user;
@@ -11,6 +14,7 @@ class UserNotifier extends ChangeNotifier{
     _initObjects();
   }
 
+//Dummy Data
   void _initObjects(){ //initialize a User and AI partners into state (we'd normally query from database here)
     final ai = AiPartner(
       name: "Sophia",
@@ -59,7 +63,7 @@ class UserNotifier extends ChangeNotifier{
     notifyListeners();
   }
 
-  void addMessage(AiPartner partner, String message) {
+  void addMessage(AiPartner partner, String message) { //adds a message to the users recorded conversation with AI partner
     if (_user == null) return;
 
     _user!.conversations ??= {};
@@ -68,15 +72,17 @@ class UserNotifier extends ChangeNotifier{
 
     notifyListeners();
 }
-  void addLanguage(String lang){
+  void addLanguage(String lang){ //Add a language to learn/user knows to their profile
     if(_user != null && !_user!.languages.contains(lang)){
       _user!.languages.add(lang);
     }
+    //update user profile in remote database
   }
-    void removeLanguage(String lang){
+    void removeLanguage(String lang){ //Remove a language/stop learning it
     if(_user != null && _user!.languages.contains(lang)){
       _user!.languages.remove(lang);
     }
+    //update user profile in database
   }
 
 }
