@@ -188,32 +188,40 @@ class _ChatInputState extends State<ChatInput> {
           const SizedBox(width: 8.0),
           CircleAvatar(//send button
             backgroundColor: Color.fromARGB(255, 7, 172, 190),
-            child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white),
-              onPressed: () {
-                // Send message logic
-                if (_textController.text.trim().isNotEmpty) {
-                  setState(() {
-                    //send new message object to list of messages in ChatContainer;
-                    _sendMessage(true, _textController.text, user.id);
-                   _textController.clear();
-                  });
-                }
-              },
+            child: Consumer<UserNotifier>(
+              builder: (context, userNotifier, child){
+              return IconButton(
+                icon: const Icon(Icons.send, color: Colors.white),
+                onPressed: () {
+                  // Send message logic
+                  if (_textController.text.trim().isNotEmpty) {
+                    setState(() {
+                      //send new message object to list of messages in ChatContainer;
+                      List<ChatMessage> messages = _sendMessage(true, _textController.text, user.id);
+                      userNotifier.addMessage(widget.aiPartner, messages[0]);
+                      userNotifier.addMessage(widget.aiPartner, messages[1]);
+                     _textController.clear();
+                    });
+                  }
+                },
+              );
+              }
+
             ),
           ),
         ],
       ),
     );
   }
-  void _sendMessage(bool isUser, String text, String userId) { //id generation needs to be made secure
+  List<ChatMessage> _sendMessage(bool isUser, String text, String userId) { //id generation needs to be made secure
     final ChatMessage message = ChatMessage(id: Random().nextInt(1000000000), userId: userId, aiID: widget.aiPartner.id, text: text, isFromUser: isUser, timestamp: DateTime.now());
     //TODO: send message to AI and catch response - trigger waiting UI?
     String responseText =  "My name is ${widget.aiPartner.name} -- ${message.text}"; //default dummy response
     MessageService().sendMessage(message); //sends user's message to the UI
- 
+    
     ChatMessage response = ChatMessage(id: Random().nextInt(1000000000), userId: userId, aiID: widget.aiPartner.id, text: responseText, isFromUser: false, timestamp: DateTime.now());
     MessageService().sendMessage(response); //sends AI's message to the UI
+    return [message, response];
   }
 
   @override

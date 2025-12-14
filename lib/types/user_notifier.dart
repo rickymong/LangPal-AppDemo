@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/types/chat_message.dart';
 import 'user.dart';
 import 'ai_partner.dart';
 
@@ -22,15 +23,42 @@ class UserNotifier extends ChangeNotifier{
       language: "Spanish",
       flag_path: "images/flags/spain_flag.jpg",
     );
+//for when conversations was AI, List<String>
+  // final List<String> convo = [
+  //   "Hi Sophia! How are you today?",
+  //   "I'm doing great, thanks for asking!",
+  //   "What’s the weather like in London?",
+  //   "A bit cloudy, but perfect for tea time ☕️"
+  // ];
 
-  final List<String> convo = [
-    "Hi Sophia! How are you today?",
-    "I'm doing great, thanks for asking!",
-    "What’s the weather like in London?",
-    "A bit cloudy, but perfect for tea time ☕️"
+  //dummy data
+  final sampleMessages = [
+    ChatMessage(
+      id: 1,
+      userId: 'user_123',
+      aiID: 'claude_sonnet_4',
+      text: 'Hello! Can you help me with a Flutter question?',
+      isFromUser: true,
+      timestamp: DateTime(2024, 12, 14, 10, 30, 0),
+    ),
+    ChatMessage(
+      id: 2,
+      userId: 'user_123',
+      aiID: 'claude_sonnet_4',
+      text: 'Of course! I\'d be happy to help with your Flutter question. What would you like to know?',
+      isFromUser: false,
+      timestamp: DateTime(2024, 12, 14, 10, 30, 15),
+    ),
+    ChatMessage(
+      id: 3,
+      userId: 'user_123',
+      aiID: 'claude_sonnet_4',
+      text: 'How do I access a ChangeNotifier outside of a build method?',
+      isFromUser: true,
+      timestamp: DateTime(2024, 12, 14, 10, 31, 0),
+    )
   ];
-
-  Map<AiPartner, List<String>> map = {ai: convo};
+  Map<AiPartner, List<ChatMessage>> map = {ai: sampleMessages};
   _user = User(
     id: "user_001",
     name: "Adam Hirshson",
@@ -63,7 +91,7 @@ class UserNotifier extends ChangeNotifier{
     notifyListeners();
   }
 
-  void addMessage(AiPartner partner, String message) { //adds a message to the users recorded conversation with AI partner
+  void addMessage(AiPartner partner, ChatMessage message) { //adds a message to the users recorded conversation with AI partner
     if (_user == null) return;
 
     _user!.conversations ??= {};

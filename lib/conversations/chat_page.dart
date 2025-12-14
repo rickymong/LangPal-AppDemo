@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:langpal_prototype/types/ai_partner.dart';
+import 'package:provider/provider.dart';
 
 
 import '../types/chat_message.dart';
 import 'chat_interface.dart';
 import 'message_service.dart'; // For simple parsing
-
+import '../types/user.dart';
+import '../types/user_notifier.dart';
 
 //Overall chat page, user arrives after tapping on a partner -- displays the chat UI (chat logic in chat_interface.dart)
 class ChatPage extends StatefulWidget{
@@ -42,6 +44,11 @@ class _ChatPage extends State<ChatPage>{
   @override
   void initState(){
     super.initState();
+    //load conversations from state - later from DB?
+    User user = Provider.of<UserNotifier>(context, listen: false).user!;
+    if(user.conversations != null){
+      _messages.addAll(user.conversations?[widget.aiPartner] ?? []);
+    }
     _subscription = MessageService().messageStream.listen((message){ //establishes the listening end of the message receiver
       setState((){
         _messages.add(message);

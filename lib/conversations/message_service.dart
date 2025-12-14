@@ -23,6 +23,9 @@ class MessageService {
     _messageController.add(message);
   }
 
+  List<List<String>> readMessages(){
+    return _messages;
+  }
   
   void dispose() {
     _messageController.close();
