@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:langpal_prototype/conversations/chat_page.dart';
-import 'package:langpal_prototype/conversations/conversations.dart';
-import 'package:langpal_prototype/main.dart';
-import 'package:langpal_prototype/profile/profile.dart';
+import '/conversations/chat_page.dart';
+import '/conversations/conversations.dart';
+import '/home.dart';
+import '/profile/profile.dart';
 
 import 'types/ai_partner.dart';
 
