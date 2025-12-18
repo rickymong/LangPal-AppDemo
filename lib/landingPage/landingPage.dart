@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/userAuth/accountSetup.dart/firstLangSelect.dart';
 import '/userAuth/loginPage.dart';
-import '/userAuth/signupPage.dart';
+import '../userAuth/accountSetup.dart/signupPage.dart';
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
 
@@ -140,7 +141,7 @@ class _LandingPageState extends State<LandingPage>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const SignUpPage(),
+                            builder: (context) => const FirstLangSelectPage(), //SignUpPage
                           ),
                         );
                       },

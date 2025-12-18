@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/userAuth/loginPage.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -186,8 +187,8 @@ class _SignUpPageState extends State<SignUpPage> {
                     },
                     style: ElevatedButton.styleFrom(
                       
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Color.fromARGB(255, 48, 186, 202),
+                      foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -215,7 +216,12 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.pop(context);
+                           Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginPage(), //SignUpPage
+                            ),
+                          );
                         },
                         child: const Text(
                           'Sign In',
