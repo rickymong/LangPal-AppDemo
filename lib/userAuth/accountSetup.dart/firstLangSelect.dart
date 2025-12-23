@@ -10,10 +10,12 @@ class FirstLangSelectPage extends StatefulWidget {
 
 class _FirstLangSelectPageState extends State<FirstLangSelectPage> {
   final _formKey = GlobalKey<FormState>();
+  int? _selectedIndex;
 
   List languageList = ["German", "Spanish", "Japanese"];
-  List flagImagePaths = ["images/flags/german_flag.jpg", "images/flags/spain_flag.jpg", "images/flags/japan_flag.png"];
+  List flagImagePaths = ["assets/flags/german_flag.jpg", "assets/flags/spain_flag.jpg", "assets/flags/japan_flag.png"];
   //  ^ change to be country abbreviations using https://pub.dev/packages/country_flags
+  
   @override
   void dispose() {
     super.dispose();
@@ -62,11 +64,46 @@ class _FirstLangSelectPageState extends State<FirstLangSelectPage> {
                   ),
                   itemCount: languageList.length,
                   itemBuilder: (context, index) {
-                    return LangSelectTab(language: languageList[index], flagPath: flagImagePaths[index],);
+                    return LangSelectTab(
+                      language: languageList[index],
+                      flagPath: flagImagePaths[index],
+                      isSelected: _selectedIndex == index,
+                      onTap: () {
+                        setState(() {
+                          _selectedIndex = index;
+                        });
+                      },
+                    );
                   },
                 ),
               ),
-              
+              SizedBox(height: screenHeight * 0.04),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => GoalPage(), //SignUpPage
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color.fromARGB(255, 48, 186, 202),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                ),
+                child: const Text(
+                  'Continue',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ]
           ),
         ),
@@ -75,35 +112,49 @@ class _FirstLangSelectPageState extends State<FirstLangSelectPage> {
   }
 }
 
-class LangSelectTab extends StatelessWidget {
+class LangSelectTab extends StatefulWidget {
   const LangSelectTab({
     super.key,
     required this.language,
     required this.flagPath,
+    required this.isSelected,
+    required this.onTap,
     this.numLearners,
   });
 
   final String language;
   final String flagPath;
+  final bool isSelected;
+  final VoidCallback onTap;
   final int? numLearners;
 
+  @override
+  State<LangSelectTab> createState() => _LangSelectTabState();
+}
+
+class _LangSelectTabState extends State<LangSelectTab> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Handle tap
-        print('Tapped: $language');
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => GoalPage(),
-          ),
-        );
+        widget.onTap();
+        print('Tapped: ${widget.language}');
+        // Optionally navigate after selection
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => GoalPage(),
+        //   ),
+        // );
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: widget.isSelected ? Colors.green.shade50 : Colors.white,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: widget.isSelected ? Colors.green : Colors.transparent,
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.2),
@@ -118,7 +169,7 @@ class LangSelectTab extends StatelessWidget {
           children: [
             // Image
             Image.asset(
-              flagPath,
+              widget.flagPath,
               width: 60,
               height: 60,
               fit: BoxFit.contain,
@@ -126,7 +177,7 @@ class LangSelectTab extends StatelessWidget {
             const SizedBox(height: 12),
             // Text
             Text(
-              language,
+              widget.language,
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,

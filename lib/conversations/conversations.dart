@@ -34,7 +34,7 @@ class _ConversationState extends State<ConversationsPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
-                    "images\logo_outline.png",
+                    "assets/langpal_logos/logo_outline.png",
                     width: size.width * 0.4,
                     height: size.width * 0.4,
                     fit: BoxFit.contain,

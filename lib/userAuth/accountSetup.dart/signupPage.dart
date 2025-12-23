@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:langpal_prototype/userAuth/loginPage.dart';
+import 'package:langpal_prototype/userAuth/login/loginPage.dart';
+import 'package:langpal_prototype/userAuth/socialLogoButtons.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -205,6 +206,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   SizedBox(height: screenHeight * 0.02),
                   // Already have account text
+                  SocialLogoButtons(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -219,7 +221,7 @@ class _SignUpPageState extends State<SignUpPage> {
                            Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const LoginPage(), //SignUpPage
+                              builder: (context) => const EmailEntryPage(), //SignUpPage
                             ),
                           );
                         },

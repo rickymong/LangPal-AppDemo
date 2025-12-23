@@ -21,20 +21,20 @@ class CustomNav extends StatelessWidget{
       name: "Sophia",
       id: "ai_001",
       language: "Spanish",
-      flag_path: "images/flags/spain_flag.jpg",
+      flag_path: "assets/flags/spain_flag.jpg",
     );
     final ai2 = AiPartner(
       name: "Akira",
       id: "ai_002",
       language: "Japanese",
-      flag_path: "images/flags/japan_flag.png",
+      flag_path: "assets/flags/japan_flag.png",
     );
 
     final ai3 = AiPartner(
       name: "Johann",
       id: "ai_003",
       language: "Germany",
-      flag_path: "images/flags/german_flag.jpg",
+      flag_path: "assets/flags/german_flag.jpg",
     );
     
     List<AiPartner> aiList = [ai, ai2,ai3];

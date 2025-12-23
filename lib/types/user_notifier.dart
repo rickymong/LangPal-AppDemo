@@ -21,7 +21,7 @@ class UserNotifier extends ChangeNotifier{
       name: "Sophia",
       id: "ai_001",
       language: "Spanish",
-      flag_path: "images/flags/spain_flag.jpg",
+      flag_path: "assets/flags/spain_flag.jpg",
     );
 //for when conversations was AI, List<String>
   // final List<String> convo = [

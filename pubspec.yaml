@@ -12,7 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
     
-  country_flags: ^4.0.0
+  country_flags: ^3.2.0
   cupertino_icons: ^1.0.8
   provider: ^6.1.5+1
   intl: ^0.19.0
@@ -31,7 +31,9 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - images/
-    - images/flags/
+    - assets/
+    - assets/flags/
+    - assets/langpal_logos/
+    - assets/social_logos/
   #   - images/a_dot_ham.jpeg
 

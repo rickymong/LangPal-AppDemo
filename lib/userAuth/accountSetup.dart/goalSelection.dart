@@ -2,17 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:langpal_prototype/landingPage/landingPage.dart';
 import 'package:langpal_prototype/userAuth/accountSetup.dart/signupPage.dart';
 
-class GoalPage extends StatelessWidget {
+class GoalPage extends StatefulWidget {
   GoalPage({
     super.key,
   });
 
+  @override
+  State<GoalPage> createState() => _GoalPageState();
+}
+
+class _GoalPageState extends State<GoalPage> {
   final List<String> goals = ["Travel & Culture", "Business & Career", "Casual Conversation", "Academic & Formal"];
-  final List<String> goalImgPaths = ["images/flags/german_flag.jpg", "images/flags/german_flag.jpg","images/flags/german_flag.jpg","images/flags/german_flag.jpg", ];
+
+  final List<String> goalImgPaths = ["assets/flags/german_flag.jpg", "assets/flags/german_flag.jpg","assets/flags/german_flag.jpg","assets/flags/german_flag.jpg", ];
+
   final _formKey = GlobalKey<FormState>();
 
+  int? _selectedIndex;
 
-  
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -45,22 +52,46 @@ class GoalPage extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: screenHeight * 0.04),
-              Flexible(
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.85, // Slightly taller than wide for image + text
-                  ),
-                  itemCount: goals.length,
-                  itemBuilder: (context, index) {
-                    return GoalTab(goal: goals[index], goalImgPath: goalImgPaths[index], );
-                  },
-                ),
-              ),
+               Flexible(
+
+      child: ListView.builder(
+        shrinkWrap: true,
+        padding: const EdgeInsets.all(16),
+        itemCount: goals.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: GoalTab(
+              goal: goals[index],
+              goalImgPath: goalImgPaths[index],
+              isSelected: _selectedIndex == index,
+              onTap: () {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+            ),
+          );
+        },
+      ),
+    ),
+              //Unfinished Grid layout - Stick with list?
+              // Flexible(
+              //   child: GridView.builder(
+              //     shrinkWrap: true,
+              //     padding: const EdgeInsets.all(16),
+              //     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              //       crossAxisCount: 2,
+              //       crossAxisSpacing: 16,
+              //       mainAxisSpacing: 16,
+              //       childAspectRatio: 0.85, // Slightly taller than wide for image + text
+              //     ),
+              //     itemCount: goals.length,
+              //     itemBuilder: (context, index) {
+              //       return GoalTab(goal: goals[index], goalImgPath: goalImgPaths[index], );
+              //     },
+              //   ),
+              // ),
               SizedBox(height: screenHeight * 0.04),
               ElevatedButton(
                 onPressed: () {
@@ -95,66 +126,70 @@ class GoalPage extends StatelessWidget {
     );
   }
 }
+class GoalTab extends StatefulWidget {
+  final String goal;
+  final String goalImgPath;
+  final bool isSelected;
+  final VoidCallback onTap;
 
-class GoalTab extends StatelessWidget {
   const GoalTab({
     super.key,
     required this.goal,
-    required this.goalImgPath
+    required this.goalImgPath,
+    required this.isSelected,
+    required this.onTap,
   });
-  final String goal;
-  final String goalImgPath;
 
+  @override
+  State<GoalTab> createState() => _GoalTabState();
+}
+
+class _GoalTabState extends State<GoalTab> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth =  MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
+    
     return GestureDetector(
-      onTap: () {
-        // Handle tap
-        //print('Tapped: $language');
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => const GoalPage(),
-        //   ),
-        // );
-      },
-      child: Row(
-      children: [
-        // Icon/Image placeholder
-        Container(
-          width: screenWidth * 0.12,
-          height: screenWidth * 0.12,
-          decoration: BoxDecoration(
-            color: Colors.blue[100],
-            borderRadius: BorderRadius.circular(8),
+      onTap: widget.onTap,
+      child: Container(
+        padding: EdgeInsets.all(screenWidth * 0.03),
+        decoration: BoxDecoration(
+          color: widget.isSelected ? Colors.green.shade50 : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: widget.isSelected ? Colors.green : Colors.grey.shade300,
+            width: 2,
           ),
-          child: Image.asset(
-              goalImgPath,
-              height: 60,
-            ),
         ),
-        SizedBox(width: screenWidth * 0.04),
-        // Text and Subtext
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                goal,
-                style: TextStyle(
-                  fontSize: screenWidth * 0.04,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
+        child: Row(
+          children: [
+            // Icon/Image placeholder
+            Container(
+              width: screenWidth * 0.12,
+              height: screenWidth * 0.12,
+              decoration: BoxDecoration(
+                color: Colors.blue[100],
+                borderRadius: BorderRadius.circular(8),
               ),
-              SizedBox(height: screenWidth * 0.01),
-            ],
-          ),
+              child: Image.asset(
+                widget.goalImgPath,
+                height: 60,
+              ),
+            ),
+            SizedBox(width: screenWidth * 0.04),
+            // Text and Subtext
+            Text(
+              widget.goal,
+              style: TextStyle(
+                fontSize: screenWidth * 0.04,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ],
         ),
-      ],
-     ),
+      ),
     );
   }
 }

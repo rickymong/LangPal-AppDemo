@@ -106,7 +106,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
-              'images/logo_outline.png',
+              'assets/langpal_logos/logo_outline.png',
               height: 60,
             ),
             label: 'Home',
