@@ -1,5 +1,6 @@
 """FastAPI entry point for LangPal MVP."""
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from listening import run_listening_practice
@@ -25,6 +26,13 @@ class ListeningRequest(BaseModel):
 
 
 app = FastAPI(title="LangPal AI Tutor", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")
