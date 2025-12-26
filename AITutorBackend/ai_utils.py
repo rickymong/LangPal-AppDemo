@@ -2,6 +2,7 @@
 from typing import Dict, List, Tuple
 
 import os
+import re
 
 # ## Set OPENAI_API_KEY as an environment variable before running the app.
 from openai import OpenAI
@@ -41,30 +42,49 @@ def build_dual_language_prompt(task: str, language: str, user_input: str, summar
         "You are an encouraging language tutor.\n"
         f"Target language: {language}.\n"
         "Always reply twice: first in the target language, then give an English translation.\n"
-        "Keep things short and clear.\n"
+        "Add a short grammar or phrasing tip plus a follow-up question in the target language.\n"
+        "Reply using exactly these sections, each starting on its own line: \n"
+        "TARGET: <target-language guidance>\n"
+        "ENGLISH: <English translation/explanation>\n"
+        "TIP: <one-sentence grammar insight>\n"
+        "FOLLOW_UP: <a friendly question in the target language>.\n"
+        "Keep each section to 1-3 sentences.\n"
         f"Recent context: {summary or 'No previous chat yet.'}\n"
         f"Task: {task}.\n"
         f"Learner input or need: {user_input}."
     )
 
 
-def parse_dual_language_response(raw_text: str) -> Tuple[str, str]:
-    """Split the model output into target-language and English parts."""
-    lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
-    if len(lines) == 1:
-        return lines[0], "English translation not provided."
-    return lines[0], " ".join(lines[1:])
+def _extract_section(raw_text: str, section: str) -> str:
+    pattern = rf"{section}:(.*?)(?=\n[A-Z_]+:|\Z)"
+    match = re.search(pattern, raw_text, flags=re.IGNORECASE | re.DOTALL)
+    if not match:
+        return ""
+    return match.group(1).strip()
+
+
+def parse_dual_language_response(raw_text: str) -> Dict[str, str]:
+    """Split the model output into target/English/tip/follow-up sections."""
+    sections = {
+        "target_text": _extract_section(raw_text, "TARGET") or raw_text.strip(),
+        "english_text": _extract_section(raw_text, "ENGLISH") or "English translation missing.",
+        "tip": _extract_section(raw_text, "TIP") or "No tip provided.",
+        "follow_up": _extract_section(raw_text, "FOLLOW_UP") or "Peux-tu partager plus?",
+    }
+    return sections
 
 
 def generate_language_reply(task: str, language: str, user_input: str, summary: str) -> Dict[str, str]:
     """Generate a grammar-focused response that follows the dual-language rule."""
     prompt = build_dual_language_prompt(task, language, user_input, summary)
     response = call_openai(prompt)
-    target_text, english_text = parse_dual_language_response(response)
+    parsed = parse_dual_language_response(response)
     return {
-        "target_text": target_text,
-        "english_text": english_text,
-        "chat_summary": target_text[:120],
+        "target_text": parsed["target_text"],
+        "english_text": parsed["english_text"],
+        "tip": parsed["tip"],
+        "follow_up": parsed["follow_up"],
+        "chat_summary": parsed["target_text"][:120],
     }
 
 
