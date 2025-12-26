@@ -20,11 +20,17 @@ def run_writing_practice(user_id: str, user_text: str) -> Dict[str, str]:
         f"**{language} Response**\n\n"
         f"{reply['target_text']}\n\n"
         "**English Translation**\n\n"
-        f"{reply['english_text']}"
+        f"{reply['english_text']}\n\n"
+        "**Quick Tip**\n\n"
+        f"{reply['tip']}\n\n"
+        "**Follow-up Prompt**\n\n"
+        f"{reply['follow_up']}"
     )
     return {
         "language": language,
         "target_text": reply["target_text"],
         "english_text": reply["english_text"],
+        "tip": reply["tip"],
+        "follow_up": reply["follow_up"],
         "markdown": markdown,
     }
