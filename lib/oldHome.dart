@@ -4,10 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:langpal_prototype/conversations/conversations.dart';
 import 'package:langpal_prototype/navigator.dart';
 import 'package:langpal_prototype/profile/profile.dart';
-import 'package:langpal_prototype/types/ai_partner.dart';
+import 'package:langpal_prototype/types/aiPartner.dart';
 import 'package:provider/provider.dart';
 import 'types/user.dart';
-import "types/user_notifier.dart";
+import "userNotifier.dart";
 
 
 class MyHomePage extends StatefulWidget {

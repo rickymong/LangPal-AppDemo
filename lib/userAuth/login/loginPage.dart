@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/homeWidgets/homePage.dart';
 import 'package:langpal_prototype/userAuth/socialLogoButtons.dart';
 
 
@@ -260,7 +261,13 @@ class _PasswordEntryPageState extends State<PasswordEntryPage> {
                           ),
                         );
                         // Call signin with widget.email and _passwordController.text
-                      }
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HomeScreen()
+                          ),
+                        );
+                      }                      
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color.fromARGB(255, 48, 186, 202),

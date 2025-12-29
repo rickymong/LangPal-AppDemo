@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:langpal_prototype/types/user_notifier.dart';
+import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
 
 //UI and logic to allow user to select new languages to add to their profile (is not currently connected (12/11/25) to what AI partners they have)

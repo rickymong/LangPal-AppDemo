@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/homeWidgets/homePage.dart';
 import 'package:provider/provider.dart';
-import "types/user_notifier.dart";
+import "userNotifier.dart";
 import "landingPage/landingPage.dart";
 
 
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
+      //home: const HomeScreen(),
       home: const LandingPage(),
     );
   }

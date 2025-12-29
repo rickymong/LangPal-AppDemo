@@ -1,18 +1,48 @@
 import 'package:flutter/material.dart';
-import 'package:langpal_prototype/types/chat_message.dart';
-import 'user.dart';
-import 'ai_partner.dart';
+import 'package:langpal_prototype/types/chatMessage.dart';
+import 'types/user.dart';
+import 'types/aiPartner.dart';
 
 //Notifier for managing state of user
 
 class UserNotifier extends ChangeNotifier{
+
    
   User? _user;
   
   User? get user => _user;
 
+  //Profile stats (queried frm DB)
+  int _dayStreak = 7;
+  int _totalXP = 1250;
+  int _currentDailyXP = 10;
+  int _dailyGoal = 50;
+
+  int _gamesCompletedToday = 0;
+  bool _dailyChallengeComplete = false;
+  final int _gamesRequiredForChallenge = 3;
+  final int _dailyChallengeBonus = 50;
+
+  int get dayStreak => _dayStreak;
+  int get totalXP => _totalXP;
+  int get currentDailyXP => _currentDailyXP;
+  int get dailyGoal => _dailyGoal;
+  int get gamesCompletedToday => _gamesCompletedToday;
+  bool get dailyChallengeComplete => _dailyChallengeComplete;
+  int get gamesRequiredForChallenge => _gamesRequiredForChallenge;
+  int get dailyChallengeBonus => _dailyChallengeBonus;
+
+
+  // rest daily challange track (should be decided based on new day and DB data?)
+  void resetDailyChallenge() {
+    _gamesCompletedToday = 0;
+    _dailyChallengeComplete = false;
+    notifyListeners();
+  }
+
+
   UserNotifier(){
-    _initObjects();
+    //_initObjects();
   }
 
 //Dummy Data
@@ -69,6 +99,35 @@ class UserNotifier extends ChangeNotifier{
   );
   }
   
+
+  /* */
+  // Method to increase daily progress
+  void addXP(int xp) {
+    _currentDailyXP += xp;
+    _totalXP += xp;
+    notifyListeners();
+  }
+
+  // Method called when a game is completed
+  void completeGame(int gameXP) {
+    // Add the game's XP
+    addXP(gameXP);
+    
+    // Increment games completed counter
+    if (!_dailyChallengeComplete && _gamesCompletedToday < _gamesRequiredForChallenge) {
+      _gamesCompletedToday++;
+      
+      if (_gamesCompletedToday >= _gamesRequiredForChallenge) {
+        _dailyChallengeComplete = true;
+        // Award bonus XP for completing daily challenge
+        addXP(_dailyChallengeBonus);
+      }
+      
+      notifyListeners();
+    }
+  }
+
+
   void changeProfilePicture(String? path){
     if(_user !=null && path != null){
       _user!.profile_image_path = path;

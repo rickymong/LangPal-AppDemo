@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '/conversations/chat_page.dart';
+import 'conversations/chatPage.dart';
 import '/conversations/conversations.dart';
-import '/home.dart';
+import 'oldHome.dart';
 import '/profile/profile.dart';
 
-import 'types/ai_partner.dart';
+import 'types/aiPartner.dart';
 
 class CustomNav extends StatelessWidget{
   final GlobalKey<NavigatorState> navKey;

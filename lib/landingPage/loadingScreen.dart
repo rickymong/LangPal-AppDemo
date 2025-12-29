@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../types/user_notifier.dart';
+import '../userNotifier.dart';
 
 
 

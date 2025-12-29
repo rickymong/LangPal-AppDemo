@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../types/ai_partner.dart';
-import 'chat_page.dart';
+import '../types/aiPartner.dart';
+import 'chatPage.dart';
 
 class ConversationsPage extends StatefulWidget {
 

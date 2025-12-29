@@ -1,6 +1,6 @@
-import 'package:langpal_prototype/types/chat_message.dart';
+import 'package:langpal_prototype/types/chatMessage.dart';
 
-import 'ai_partner.dart';
+import 'aiPartner.dart';
 
 class User {
   final String id;

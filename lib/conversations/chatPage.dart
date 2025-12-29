@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:langpal_prototype/types/ai_partner.dart';
+import 'package:langpal_prototype/types/aiPartner.dart';
 import 'package:provider/provider.dart';
 
 
-import '../types/chat_message.dart';
-import 'chat_interface.dart';
+import '../types/chatMessage.dart';
+import 'chatInterface.dart';
 import 'message_service.dart'; // For simple parsing
 import '../types/user.dart';
-import '../types/user_notifier.dart';
+import '../userNotifier.dart';
 
 //Overall chat page, user arrives after tapping on a partner -- displays the chat UI (chat logic in chat_interface.dart)
 class ChatPage extends StatefulWidget{

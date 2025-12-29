@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import '../types/chat_message.dart';
+import '../types/chatMessage.dart';
 
 class MessageService {
   //NOTE: MessageService interactions NOT done - end goal is to have them be fed into State managed user.conversations
