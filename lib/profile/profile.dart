@@ -126,6 +126,45 @@ class _ProfileState extends State<Profile> {
                   ),
                 ),
               ),
+              
+              SizedBox(height: height * 0.02),
+              
+              // Sign Out Button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    // Show confirmation dialog
+                    final shouldSignOut = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Sign Out'),
+                        content: const Text('Are you sure you want to sign out?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+                    
+                    if (shouldSignOut == true && context.mounted) {
+                      await context.read<UserNotifier>().signOut();
+                    }
+                  },
+                  icon: const Icon(Icons.logout, color: Colors.red),
+                  label: const Text("Sign Out", style: TextStyle(color: Colors.red)),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: height * 0.018),
+                    side: const BorderSide(color: Colors.red),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

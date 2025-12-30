@@ -6,6 +6,7 @@ import 'package:langpal_prototype/navigator.dart';
 import 'package:langpal_prototype/profile/profile.dart';
 import 'package:langpal_prototype/types/ai_partner.dart';
 import 'package:langpal_prototype/services/supabase_service.dart';
+import 'package:langpal_prototype/auth/auth_page.dart';
 import 'package:provider/provider.dart';
 import 'types/user.dart';
 import "types/user_notifier.dart";
@@ -37,7 +38,46 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(),
+      home: const AuthWrapper(),
+    );
+  }
+}
+
+/// Wrapper that shows AuthPage or MyHomePage based on login state
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<UserNotifier>(
+      builder: (context, userNotifier, child) {
+        // Show loading while initializing
+        if (userNotifier.isLoading) {
+          return const Scaffold(
+            backgroundColor: Color.fromARGB(255, 255, 248, 233),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    color: Color.fromARGB(255, 7, 172, 190),
+                  ),
+                  SizedBox(height: 16),
+                  Text('Loading...'),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Show home page if user is loaded (logged in or demo mode)
+        if (userNotifier.user != null) {
+          return const MyHomePage();
+        }
+
+        // Show auth page if no user
+        return const AuthPage();
+      },
     );
   }
 }

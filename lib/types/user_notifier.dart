@@ -27,9 +27,15 @@ class UserNotifier extends ChangeNotifier {
     if (SupabaseService.isLoggedIn) {
       await loadUserData();
     } else {
-      // For development: use mock data if not logged in
-      _initMockData();
+      // Not logged in - show auth page
+      _isLoading = false;
+      notifyListeners();
     }
+  }
+
+  /// Continue without account (demo/guest mode)
+  void continueAsGuest() {
+    _initMockData();
   }
 
   /// Load user data from Supabase

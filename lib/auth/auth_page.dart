@@ -248,8 +248,8 @@ class _AuthPageState extends State<AuthPage> {
                   // Continue without account (dev mode)
                   OutlinedButton(
                     onPressed: () {
-                      // Navigate to main app with mock data
-                      Navigator.of(context).pushReplacementNamed('/home');
+                      // Load mock data and navigate (AuthWrapper will auto-switch)
+                      context.read<UserNotifier>().continueAsGuest();
                     },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
