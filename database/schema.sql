@@ -2,16 +2,7 @@
 -- LANGPAL DATABASE SCHEMA
 -- Supabase PostgreSQL Database
 -- ============================================
--- 
--- HOW TO USE:
--- 1. Go to your Supabase project dashboard
--- 2. Navigate to SQL Editor
--- 3. Paste this entire file
--- 4. Click "Run"
---
--- ============================================
 
--- ============================================
 -- 1. TABLES
 -- ============================================
 
