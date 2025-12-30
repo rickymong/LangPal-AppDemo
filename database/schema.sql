@@ -223,26 +223,3 @@ SELECT
     ) AS message_count
 FROM user_ai_partners uap
 JOIN ai_partners ap ON uap.ai_partner_id = ap.id;
-
--- ============================================
--- 7. STORAGE BUCKET (for profile images)
--- Run this separately in Supabase Dashboard > Storage
--- ============================================
-
--- To set up storage for profile pictures:
--- 1. Go to Supabase Dashboard > Storage
--- 2. Create a new bucket called "avatars"
--- 3. Make it public (or use signed URLs)
--- 4. Add these policies in SQL Editor:
-
--- INSERT INTO storage.buckets (id, name, public) 
--- VALUES ('avatars', 'avatars', true);
-
--- CREATE POLICY "Users can upload own avatar"
---     ON storage.objects FOR INSERT
---     WITH CHECK (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
-
--- CREATE POLICY "Anyone can view avatars"
---     ON storage.objects FOR SELECT
---     USING (bucket_id = 'avatars');
-
