@@ -5,12 +5,17 @@ import 'package:langpal_prototype/conversations/conversations.dart';
 import 'package:langpal_prototype/navigator.dart';
 import 'package:langpal_prototype/profile/profile.dart';
 import 'package:langpal_prototype/types/ai_partner.dart';
+import 'package:langpal_prototype/services/supabase_service.dart';
 import 'package:provider/provider.dart';
 import 'types/user.dart';
 import "types/user_notifier.dart";
 
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Supabase
+  await SupabaseService.initialize();
   
   runApp(ChangeNotifierProvider(
     create: (context) => UserNotifier(),
