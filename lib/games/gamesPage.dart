@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/games/dailyChallengeTracker.dart';
+import 'package:langpal_prototype/games/vocabMatcher.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
 import '../types/games.dart';
@@ -21,6 +22,7 @@ class _GamesPageState extends State<GamesPage> {
       difficulty: 'Easy',
       icon: Icons.extension,
       summary: 'Match words with translations',
+      gamePage: VocabMatch()
     ),
     Game(
       name: 'Sentence Builder',
@@ -136,7 +138,17 @@ class _GamesPageState extends State<GamesPage> {
       child: InkWell(
         onTap: () {
           // Handle game tap - navigate to game screen
+          if(game.gamePage != null){
+            print("=====================has gamepage");
+             Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => game.gamePage!),
+            );
+          }
+          else{
+            print("NO GAMEPAGE");
           _showGameStartDialog(game, screenWidth, screenHeight);
+          }
         },
         child: Row(
           children: [

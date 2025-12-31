@@ -7,6 +7,7 @@ class Game {
   final String difficulty; // "Easy", "Medium", "Hard"
   final IconData icon;
   final String summary;
+  final Widget? gamePage;
 
   Game({
     required this.name,
@@ -15,5 +16,6 @@ class Game {
     required this.difficulty,
     required this.icon,
     required this.summary,
+    this.gamePage,
   });
 }
