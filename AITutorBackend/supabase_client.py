@@ -1,5 +1,5 @@
 """Helper utilities for talking to Supabase."""
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import os
 
@@ -21,18 +21,35 @@ def get_supabase_client() -> Client:
     return _client
 
 
+def fetch_user_languages(user_id: str) -> List[str]:
+    """Return the list of languages a user is studying from user_languages table."""
+    client = get_supabase_client()
+    response = (
+        client.table("user_languages")
+        .select("language")
+        .eq("user_id", user_id)
+        .order("created_at", desc=False)
+        .execute()
+    )
+    data = response.data or []
+    return [row.get("language", "") for row in data if row.get("language")]
+
+
 def fetch_user_context(user_id: str) -> Dict[str, str]:
     """Read the user's preferred language and chat summary from Supabase."""
     client = get_supabase_client()
     response = (
         client.table("user_profiles")
         .select("current_language, chat_summary")
-        .eq("user_id", user_id)
+        .eq("id", user_id)
         .single()
         .execute()
     )
     data = response.data or {}
-    language = data.get("current_language", "French")
+    language = data.get("current_language")
+    if not language:
+        language_options = fetch_user_languages(user_id)
+        language = language_options[0] if language_options else "French"
     summary = data.get("chat_summary", "")
     return {"language": language, "summary": summary}
 
@@ -42,7 +59,7 @@ def upsert_chat_summary(user_id: str, language: str, chat_summary: str) -> None:
     client = get_supabase_client()
     client.table("user_profiles").upsert(
         {
-            "user_id": user_id,
+            "id": user_id,
             "current_language": language,
             "chat_summary": chat_summary,
         }
