@@ -1,8 +1,9 @@
 """Helpers that talk to OpenAI and ElevenLabs."""
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List
 
 import os
 import re
+import json
 
 # ## Set OPENAI_API_KEY as an environment variable before running the app.
 from openai import OpenAI
@@ -71,6 +72,60 @@ def parse_dual_language_response(raw_text: str) -> Dict[str, str]:
         "tip": _extract_section(raw_text, "TIP") or "No tip provided.",
         "follow_up": _extract_section(raw_text, "FOLLOW_UP") or "Peux-tu partager plus?",
     }
+    return sections
+
+
+def _load_json_response(raw_text: str) -> Dict[str, Any]:
+    try:
+        return json.loads(raw_text)
+    except json.JSONDecodeError:
+        return {}
+
+
+def generate_fill_in_blank_questions(language: str, summary: str, num_questions: int = 3) -> Dict[str, List[Dict[str, str]]]:
+    """Ask OpenAI for fill-in-the-blank prompts plus answer key."""
+    prompt = (
+        "Create a fill-in-the-blank drill for a language learner.\n"
+        f"Language: {language}.\n"
+        f"Give {num_questions} sentences. Replace one word with ___ and provide 3 answer choices.\n"
+        "Respond ONLY in valid JSON with this shape: \n"
+        "{\n  \"questions\": [\n    {\"sentence\": \"... ___ ...\", \"options\": [\"option\"], \"answer\": \"correct word\", \"explanation\": \"short English hint\"}\n  ],\n  \"tip\": \"short encouragement\"\n}\n"
+        f"Context: {summary or 'Fresh session.'}"
+    )
+    raw = call_openai(prompt)
+    data = _load_json_response(raw)
+    return data or {
+        "questions": [
+            {
+                "sentence": "Je ___ au marché chaque dimanche.",
+                "options": ["vais", "allons", "allez"],
+                "answer": "vais",
+                "explanation": "Use je + vais for 'I go'.",
+            }
+        ],
+        "tip": "Focus on verb agreement in the present tense.",
+    }
+
+
+def generate_matching_pairs(language: str, num_pairs: int = 4) -> Dict[str, List[Dict[str, str]]]:
+    """Ask OpenAI for vocab pairs for matching exercises."""
+    prompt = (
+        "Provide vocabulary flashcards for matching.\n"
+        f"Language: {language}.\n"
+        f"Return {num_pairs} distinct word pairs as JSON with format: \n"
+        "{\n  \"pairs\": [\n    {\"target_word\": \"bonjour\", \"english_word\": \"hello\", \"hint\": \"greeting\"}\n  ]\n}\n"
+        "Output JSON only. Keep hints short in English."
+    )
+    raw = call_openai(prompt)
+    data = _load_json_response(raw)
+    if not data:
+        data = {
+            "pairs": [
+                {"target_word": "bonjour", "english_word": "hello", "hint": "greeting"},
+                {"target_word": "merci", "english_word": "thank you", "hint": "gratitude"},
+            ]
+        }
+    return data
     return sections
 
 
