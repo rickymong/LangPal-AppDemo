@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/types/chatMessage.dart';
+import 'package:langpal_prototype/services/supabase_service.dart';
 import 'types/user.dart';
 import 'types/aiPartner.dart';
 
@@ -40,65 +41,175 @@ class UserNotifier extends ChangeNotifier{
     notifyListeners();
   }
 
+  List<AiPartner> _aiPartners = [];
+  Map<AiPartner, List<ChatMessage>> _conversations = {};
+  bool _isLoading = true;
+  String? _error;
 
-  UserNotifier(){
-    //_initObjects();
+  List<AiPartner> get aiPartners => _aiPartners;
+  Map<AiPartner, List<ChatMessage>> get conversations => _conversations;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+  bool get isLoggedIn => SupabaseService.isLoggedIn;
+
+  UserNotifier() {
+    _init();
   }
 
+
+Future<void> _init() async {
+    if (SupabaseService.isLoggedIn) {
+      await loadUserData();
+    } else {
+      // Not logged in - show auth page
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Continue without account (demo/guest mode)
+  void continueAsGuest() {
+    _initMockData();
+  }
+
+  /// Load user data from Supabase
+  Future<void> loadUserData() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // Fetch user profile
+      _user = await SupabaseService.fetchUserProfile();
+
+      // Fetch user's AI partners
+      _aiPartners = await SupabaseService.fetchUserAiPartners();
+
+      // Fetch conversations for each AI partner
+      _conversations = {};
+      for (final partner in _aiPartners) {
+        final messages = await SupabaseService.fetchMessages(partner.id);
+        _conversations[partner] = messages;
+      }
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+
 //Dummy Data
-  void _initObjects(){ //initialize a User and AI partners into state (we'd normally query from database here)
+  void _initMockData() {
     final ai = AiPartner(
       name: "Sophia",
       id: "ai_001",
       language: "Spanish",
-      flag_path: "assets/flags/spain_flag.jpg",
+      flag_path: "images/flags/spain_flag.jpg",
     );
-//for when conversations was AI, List<String>
-  // final List<String> convo = [
-  //   "Hi Sophia! How are you today?",
-  //   "I'm doing great, thanks for asking!",
-  //   "What’s the weather like in London?",
-  //   "A bit cloudy, but perfect for tea time ☕️"
-  // ];
 
-  //dummy data
-  final sampleMessages = [
-    ChatMessage(
-      id: 1,
-      userId: 'user_123',
-      aiID: 'claude_sonnet_4',
-      text: 'Hello! Can you help me with a Flutter question?',
-      isFromUser: true,
-      timestamp: DateTime(2024, 12, 14, 10, 30, 0),
-    ),
-    ChatMessage(
-      id: 2,
-      userId: 'user_123',
-      aiID: 'claude_sonnet_4',
-      text: 'Of course! I\'d be happy to help with your Flutter question. What would you like to know?',
-      isFromUser: false,
-      timestamp: DateTime(2024, 12, 14, 10, 30, 15),
-    ),
-    ChatMessage(
-      id: 3,
-      userId: 'user_123',
-      aiID: 'claude_sonnet_4',
-      text: 'How do I access a ChangeNotifier outside of a build method?',
-      isFromUser: true,
-      timestamp: DateTime(2024, 12, 14, 10, 31, 0),
-    )
-  ];
-  Map<AiPartner, List<ChatMessage>> map = {ai: sampleMessages};
-  _user = User(
-    id: "user_001",
-    name: "Adam Hirshson",
-    email: "Adam@Hirshson.com", //NOT REAL EMAIL - dont use for the purpose of the application
-    createdAt: DateTime.now(),
-    conversations: map,
-    languages: ["English", "Chinese"]
-  );
+    final List<ChatMessage> convo = [
+      ChatMessage(
+        id: 1,
+        userId: "user_001",
+        aiID: "ai_001",
+        text: "Hi Sophia! How are you today?",
+        isFromUser: true,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
+      ),
+      ChatMessage(
+        id: 2,
+        userId: "user_001",
+        aiID: "ai_001",
+        text: "I'm doing great, thanks for asking!",
+        isFromUser: false,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 4)),
+      ),
+      ChatMessage(
+        id: 3,
+        userId: "user_001",
+        aiID: "ai_001",
+        text: "What's the weather like in London?",
+        isFromUser: true,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 3)),
+      ),
+      ChatMessage(
+        id: 4,
+        userId: "user_001",
+        aiID: "ai_001",
+        text: "A bit cloudy, but perfect for tea time ☕️",
+        isFromUser: false,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
+      ),
+    ];
+
+    _aiPartners = [ai];
+    _conversations = {ai: convo};
+    
+    _user = User(
+      id: "user_001",
+      name: "Adam Hirshson",
+      email: "Adam@Hirshson.com",
+      createdAt: DateTime.now(),
+      languages: ["English", "Chinese"],
+    );
+
+    _isLoading = false;
+    notifyListeners();
   }
+
   
+ /// Sign up a new user
+  Future<bool> signUp({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
+    print("BUBBLES : BEOFRE SIGNUP CALL");
+    try {
+      final response = await SupabaseService.signUp(
+        email: email,
+        password: password,
+        name: name,
+      );
+      print(response);
+      print("BUBBLES --- signed up0");
+      await loadUserData();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Sign in existing user
+  Future<bool> signIn({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      await SupabaseService.signIn(email: email, password: password);
+      await loadUserData();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Sign out
+  Future<void> signOut() async {
+    await SupabaseService.signOut();
+    _user = null;
+    _aiPartners = [];
+    _conversations = {};
+    notifyListeners();
+  }
 
   /* */
   // Method to increase daily progress
@@ -134,7 +245,7 @@ class UserNotifier extends ChangeNotifier{
       notifyListeners();
     }
   }
-  //fetch data from hypothetical database to bring stored data into state mangement
+//fetch data from hypothetical database to bring stored data into state mangement
   void addPartner(AiPartner newPartner){
     if(_user != null && !_user!.conversations!.containsKey(newPartner)){
       _user!.conversations!.addAll({newPartner: []}); //add partner with no conversations
@@ -165,11 +276,44 @@ class UserNotifier extends ChangeNotifier{
     }
     //update user profile in remote database
   }
-    void removeLanguage(String lang){ //Remove a language/stop learning it
-    if(_user != null && _user!.languages.contains(lang)){
+    Future<void> removeLanguage(String lang) async {
+    if (_user != null && _user!.languages.contains(lang)) {
       _user!.languages.remove(lang);
+
+      if (SupabaseService.isLoggedIn) {
+        await SupabaseService.removeLanguage(lang);
+      }
+
+      notifyListeners();
     }
-    //update user profile in database
+  }
+
+  /// Fetch all available AI partners (for adding new ones)
+  Future<List<AiPartner>> fetchAvailablePartners() async {
+    if (SupabaseService.isLoggedIn) {
+      return await SupabaseService.fetchAllAiPartners();
+    }
+    // Return mock data
+    return [
+      AiPartner(
+        name: "Sophia",
+        id: "ai_001",
+        language: "Spanish",
+        flag_path: "images/flags/spain_flag.jpg",
+      ),
+      AiPartner(
+        name: "Yuki",
+        id: "ai_002",
+        language: "Japanese",
+        flag_path: "images/flags/japan_flag.png",
+      ),
+      AiPartner(
+        name: "Hans",
+        id: "ai_003",
+        language: "German",
+        flag_path: "images/flags/german_flag.jpg",
+      ),
+    ];
   }
 
 }
