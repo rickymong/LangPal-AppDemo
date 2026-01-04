@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:langpal_prototype/types/user_notifier.dart';
-import 'package:provider/provider.dart';
 
-import '../types/ai_partner.dart';
-import '../types/user.dart';
-import 'chat_page.dart';
+import '../types/aiPartner.dart';
+import 'chatPage.dart';
 
 class ConversationsPage extends StatefulWidget {
-  final List<AiPartner> aiList;
+
+  //Creates a scrollable page of buttons that display the flag, language, and name of an AI partner. Tap to enter conversation.
+
+  final List<AiPartner> aiList; //list of users partners
   const ConversationsPage({super.key, required this.aiList});
 
   @override
@@ -29,12 +29,12 @@ class _ConversationState extends State<ConversationsPage> {
       body: SingleChildScrollView(
         child: Column(
           children: widget.aiList.map((item) {
-            if(widget.aiList.isEmpty){
+            if(widget.aiList.isEmpty){ //Used for home page when user has no partners -- does not run on general Conversations page from Nav bar
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
-                    "images\logo_outline.png",
+                    "assets/langpal_logos/logo_outline.png",
                     width: size.width * 0.4,
                     height: size.width * 0.4,
                     fit: BoxFit.contain,
@@ -52,10 +52,10 @@ class _ConversationState extends State<ConversationsPage> {
                 ],
               );
             }
-            return Padding(
+            return Padding( //Acts as a custom button
               padding: EdgeInsets.symmetric(horizontal: width * 0.05, vertical: 8),
               child: GestureDetector(
-                onTap: () {
+                onTap: () { //send user to a chat room with the AI
                   //debugPrint("Tapped on ${item.name}");
                   Navigator.of(context, rootNavigator: true).push(
                     MaterialPageRoute(
@@ -63,14 +63,14 @@ class _ConversationState extends State<ConversationsPage> {
                     ),
                   );
                 },
-                child: Container(
+                child: Container( //UI of the button
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     image: DecorationImage(
-                      image: AssetImage(item.flag_path) as ImageProvider,
+                      image: AssetImage(item.flag_path) as ImageProvider, //Gets flag of country origin
                       fit: BoxFit.fill, // fill the box
                       colorFilter: ColorFilter.mode(
                         Colors.black.withOpacity(0.3), // dark overlay for text readability

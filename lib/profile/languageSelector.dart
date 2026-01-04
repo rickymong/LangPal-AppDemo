@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:langpal_prototype/types/user_notifier.dart';
+import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
+
+//UI and logic to allow user to select new languages to add to their profile (is not currently connected (12/11/25) to what AI partners they have)
 
 class LanguageSelector extends StatefulWidget {
   const LanguageSelector({super.key});
@@ -11,7 +13,7 @@ class LanguageSelector extends StatefulWidget {
 
 class _LanguageSelectorState extends State<LanguageSelector> {
   // Example language list
-  final List<String> _availableLanguages = [
+  final List<String> _availableLanguages = [ //should obtain available languages from the database to make it dynamic
     "English",
     "Spanish",
     "German",
@@ -19,7 +21,7 @@ class _LanguageSelectorState extends State<LanguageSelector> {
   ];
 
   // User’s selected languages
-  List<String> _selectedLanguages = ["English"];
+  List<String> _selectedLanguages = ["English"]; //default language (can be changed or perhaps selected at sign up)
 
   void _openLanguagePicker() async {
     // Show a modal bottom sheet with checkboxes
@@ -32,7 +34,7 @@ class _LanguageSelectorState extends State<LanguageSelector> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return Consumer<UserNotifier>(
+            return Consumer<UserNotifier>( //access user state notifier
               builder: (context, userNotifier, child) {
                 return Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -48,7 +50,7 @@ class _LanguageSelectorState extends State<LanguageSelector> {
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            ..._availableLanguages.map((lang) {
+                            ..._availableLanguages.map((lang) { //creates the scrollable list of available languages
                               final selected = _selectedLanguages.contains(lang);
                               return CheckboxListTile(
                                 title: Text(lang),
@@ -105,7 +107,7 @@ class _LanguageSelectorState extends State<LanguageSelector> {
           ),
           Row(
             children: [
-              Text(
+              Text( //shows what languages are attached to the user
                 displayed.isEmpty ? "None" : displayed,
                 style: const TextStyle(fontSize: 16),
               ),

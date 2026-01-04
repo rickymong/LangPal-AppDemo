@@ -1,18 +1,18 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:langpal_prototype/types/ai_partner.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:langpal_prototype/types/aiPartner.dart';
+import 'package:provider/provider.dart';
 
 
-import '../types/chat_message.dart';
-import 'chat_interface.dart';
+import '../types/chatMessage.dart';
+import 'chatInterface.dart';
 import 'message_service.dart'; // For simple parsing
+import '../types/user.dart';
+import '../userNotifier.dart';
 
-
-
+//Overall chat page, user arrives after tapping on a partner -- displays the chat UI (chat logic in chat_interface.dart)
 class ChatPage extends StatefulWidget{
 
   final AiPartner aiPartner;
@@ -27,9 +27,9 @@ class _ChatPage extends State<ChatPage>{
   TextEditingController chatInput = TextEditingController();
   bool isLoading = true;
   late StreamSubscription<ChatMessage> _subscription;
-  final StreamController<ChatMessage> messageController = StreamController<ChatMessage>.broadcast();
+  final StreamController<ChatMessage> messageController = StreamController<ChatMessage>.broadcast(); //establishes a pipe from sending and receiving messages into the chat UI
 
-  //ChatBox Data
+  //ChatBox dummy/starter Data
     final List<ChatMessage> _messages = [
     ChatMessage(
       id: 1,
@@ -44,7 +44,12 @@ class _ChatPage extends State<ChatPage>{
   @override
   void initState(){
     super.initState();
-    _subscription = MessageService().messageStream.listen((message){
+    //load conversations from state - later from DB?
+    User user = Provider.of<UserNotifier>(context, listen: false).user!;
+    if(user.conversations != null){
+      _messages.addAll(user.conversations?[widget.aiPartner] ?? []);
+    }
+    _subscription = MessageService().messageStream.listen((message){ //establishes the listening end of the message receiver
       setState((){
         _messages.add(message);
         isLoading = false;
@@ -93,9 +98,9 @@ class _ChatPage extends State<ChatPage>{
                 Expanded(
                    child: const SizedBox(height: 8),
                 ),
-                ChatContainer(messages: _messages),
+                ChatContainer(messages: _messages), //The box that contains the messages
                 const SizedBox(height: 8),
-                ChatInput(aiPartner: widget.aiPartner),
+                ChatInput(aiPartner: widget.aiPartner), //The box the user types and hits send
                 SizedBox(height: height * 0.08,)
             ],
           ),

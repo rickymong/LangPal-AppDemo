@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:langpal_prototype/profile/language_selector.dart';
-import 'package:langpal_prototype/types/ai_partner.dart';
+import 'package:langpal_prototype/profile/languageSelector.dart';
+import 'package:langpal_prototype/types/aiPartner.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../types/user.dart';
-import '../types/user_notifier.dart';
+import '../userNotifier.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+
 
 
 class Profile extends StatefulWidget {
@@ -21,7 +22,7 @@ class _ProfileState extends State<Profile> {
   final ImagePicker imgPicker = ImagePicker(); //allows profile photo upload
   Future<dynamic> pickImage() async {
     final XFile? image = await imgPicker.pickImage(source: ImageSource.gallery); 
-    //In production, would assign this to a database so 
+    //In production, would upload this to a database so 
     //it doesn't depend on the user keeping the image 
 
     if(image != null) {
@@ -41,22 +42,17 @@ class _ProfileState extends State<Profile> {
     //load data from user state
     User user = context.watch<UserNotifier>().user!;
     String languages = "";
-    for(int i = 0; i < user.languages.length; i++){
+    for(int i = 0; i < user.languages.length; i++){ //Turn user's languages into a visual list -- How they are displayed should probably be changed
       if(i < user.languages.length - 1){
         languages += "${user.languages[i]} | ";
       }
       else{
-        languages = languages + user.languages[i];
+        languages = languages + user.languages[i]; //makes it so last item doesn't have '|'"
       }
     }
 
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text("Profile"),
-      //   centerTitle: true,
-      //   backgroundColor: Color.fromARGB(255, 7, 172, 190), //Theme.of(context).colorScheme.inversePrimary,
-      //   foregroundColor: Color.fromARGB(255, 42, 42, 42),
-      // ),
+
       body: SingleChildScrollView(
         child: Container(
           width: width,
@@ -70,7 +66,7 @@ class _ProfileState extends State<Profile> {
               // Profile image
               Consumer<UserNotifier>(
                 builder: (context, user, child) {  
-                  return GestureDetector(
+                  return GestureDetector( //tap profile picture to change
                     onTap: () async {
                       String? newImagePath = await pickImage() as String?;
                       user.changeProfilePicture(newImagePath);
@@ -89,14 +85,14 @@ class _ProfileState extends State<Profile> {
               ),
               SizedBox(height: height * 0.03),
 
-              // Editable Name
+              // Make name editable?
               Text(
                 user.name,
                 style: Theme.of(context).textTheme.headlineLarge,
               ),
               SizedBox(height: height * 0.02),
 
-              // Joined Date
+              // Joined Date - gotten from user state
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -123,6 +119,45 @@ class _ProfileState extends State<Profile> {
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: height * 0.018),
                     backgroundColor: Color.fromARGB(255, 7, 172, 190),
+                  ),
+                ),
+              ),
+              
+              SizedBox(height: height * 0.02),
+              
+              // Sign Out Button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    // Show confirmation dialog
+                    final shouldSignOut = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Sign Out'),
+                        content: const Text('Are you sure you want to sign out?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+                    
+                    if (shouldSignOut == true && context.mounted) {
+                      await context.read<UserNotifier>().signOut();
+                    }
+                  },
+                  icon: const Icon(Icons.logout, color: Colors.red),
+                  label: const Text("Sign Out", style: TextStyle(color: Colors.red)),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: height * 0.018),
+                    side: const BorderSide(color: Colors.red),
                   ),
                 ),
               ),

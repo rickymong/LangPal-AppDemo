@@ -1,3 +1,4 @@
+//Class to represent Ai chat bot partners and their relevant data
 class AiPartner{
   final String name;
   final String id;

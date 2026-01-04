@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import '../types/chat_message.dart';
+import '../types/chatMessage.dart';
 
 class MessageService {
-  //NOTE: MessageService interactions left undone - end goal was to have them be fed into State managed user.conversations
+  //NOTE: MessageService interactions NOT done - end goal is to have them be fed into State managed user.conversations
   static final MessageService _instance = MessageService._internal();
   
   factory MessageService() => _instance;
@@ -14,7 +14,7 @@ class MessageService {
   
   Stream<ChatMessage> get messageStream => _messageController.stream;
   List<List<String>> _messages = [];
-  void sendMessage(ChatMessage message) {
+  void sendMessage(ChatMessage message) { //method is bugged - last tested by Adam (predevlopment) did not properly save messages to state - how they are loaded should also be checked
           if(message.isFromUser == true){
         _messages.add(["user", message.text]);
       }else{
@@ -23,6 +23,9 @@ class MessageService {
     _messageController.add(message);
   }
 
+  List<List<String>> readMessages(){
+    return _messages;
+  }
   
   void dispose() {
     _messageController.close();
