@@ -1,120 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:langpal_prototype/games/dailyChallengeTracker.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
+import 'package:audioplayers/audioplayers.dart';
+
 import '../types/games.dart';
 
 class VocabMatch extends StatefulWidget{
-  const VocabMatch({Key? key}) : super(key:key);
+  const VocabMatch({Key? key, required this.xp}) : super(key:key);
 //Game game, double screenWidth, double screenHeight
+  final int xp;
   
   @override
   State<VocabMatch> createState() => _VocabMatchState();
 
   
 }
-
-// class _VocabMatchState extends State<VocabMatch> {
-
-//   Map<String,String> vocabPairsMap = {};
-//   List<String> vocabList = []; //map of key value pairs put into list for UI creation
-//   @override
-//   void initState(){
-//     super.initState();
-//     //get words from AI/API
-//     vocabPairsMap = {"hi": "hola", "bye" : "adios", "orange" : "naranja", "meat": "carne", "chicken" : "pollo", "fat" : "gordo", "old" : "viejo"};
-//     // for(String key in vocabPairsMap!.keys){ //puts list as "hi, hola, bye, adios, etc"
-//     //   vocabList!.add(key);
-//     //   vocabList!.add(vocabPairsMap![key]!);
-//     // }
-//     //puts all words into a shuffled list to be displayed
-//     vocabList.addAll(vocabPairsMap.keys);
-//     vocabList.addAll(vocabPairsMap.values);
-//     vocabList.shuffle();
-
-//   }
-
-//   Widget build(BuildContext context) {
-//     final screenWidth = MediaQuery.of(context).size.width;
-//     final screenHeight = MediaQuery.of(context).size.height;
-
-//     return Scaffold(
-//         backgroundColor: Colors.white,
-//         appBar: AppBar(
-//         backgroundColor: Colors.white,
-//         elevation: 0,
-//         centerTitle: true,
-//         leading: IconButton(
-//           icon: const Icon(Icons.arrow_back, color: Colors.black),
-//           onPressed: () => Navigator.pop(context),
-//         ),
-//         title: const Text(
-//           'Vocab Match',
-//           style: TextStyle(
-//             color: Colors.black,
-//             fontSize: 18,
-//             fontWeight: FontWeight.w600,
-//           ),
-//         ),
-//       ),
-//       body: SingleChildScrollView(
-//         child: Padding(
-//           padding: EdgeInsets.all(screenWidth * 0.05),
-//           child: Column(
-//             children: [
-//               ListView.builder(
-//                 shrinkWrap: true,
-//                 physics: const NeverScrollableScrollPhysics(),
-//                 itemCount: vocabList.length,
-//                 itemBuilder: (context, index) {
-//                   return VocabCard(word: vocabList[index], screenHeight: screenHeight, screenWidth: screenWidth);
-//               },
-                
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// class VocabCard extends StatelessWidget {
-//   const VocabCard({
-//     super.key,
-//     required this.word,
-//     required this.screenHeight,
-//     required this.screenWidth,
-//   });
-//   final String word;
-//   final double screenHeight;
-//   final double screenWidth;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//     margin: EdgeInsets.only(bottom: screenHeight * 0.015),
-//     padding: EdgeInsets.all(screenWidth * 0.04),
-//     decoration: BoxDecoration(
-//       color: const Color(0xFFF7F7F7),
-//       borderRadius: BorderRadius.circular(screenWidth * 0.04),
-//       border: Border.all(
-//         color: const Color(0xFFE5E5E5),
-//         width: 1,
-//       ),
-//     ),
-//     child: InkWell(
-//       onTap: () {
-//         // Highlight green if first or correct, play audio? Red if wrong
-//       },
-//       child: Text(
-//         word,
-        
-//         )
-//     ),
-//                 );
-//   }
-// }
 
 class _VocabMatchState extends State<VocabMatch> {
   Map<String, String> vocabPairsMap = {};
@@ -125,22 +25,27 @@ class _VocabMatchState extends State<VocabMatch> {
   Set<String> matchedWords = {};
   Set<String> flashingWords = {};
 
+  final AudioPlayer correctPlayer = AudioPlayer();
+  final AudioPlayer wrongPlayer = AudioPlayer();
+
   @override
   void initState() {
     super.initState();
     vocabPairsMap = {
       "hi": "hola",
       "bye": "adios",
-      "orange": "naranja",
-      "meat": "carne",
-      "chicken": "pollo",
-      "fat": "gordo",
-      "old": "viejo"
+      //"orange": "naranja",
+      //"meat": "carne",
+      //"chicken": "pollo",
+      //"fat": "gordo",
+      //"old": "viejo"
     };
     
     vocabList.addAll(vocabPairsMap.keys);
     vocabList.addAll(vocabPairsMap.values);
     vocabList.shuffle();
+
+    _preloadSounds();
   }
 
   int get _matchedPairs => matchedWords.length ~/ 2;
@@ -152,10 +57,16 @@ class _VocabMatchState extends State<VocabMatch> {
     if (percentage < 0.8) return const Color(0xFFD97706); // Dark yellow/amber
     return Colors.green;
   }
+  void _preloadSounds() async {
+    await correctPlayer.setSource(AssetSource('audio/games/vocab_match_correct.wav'));
+    await wrongPlayer.setSource(AssetSource('audio/games/vocab_match_incorrect.wav'));
 
+    await correctPlayer.setReleaseMode(ReleaseMode.stop);
+    await wrongPlayer.setReleaseMode(ReleaseMode.stop);
+  }
+  
   void _handleCardTap(String word) {
-    if (matchedWords.contains(word)) return;
-    if (flashingWords.contains(word)) return;
+    if (matchedWords.contains(word) || flashingWords.contains(word)) return;
     
     setState(() {
       if (firstSelectedWord == null) {
@@ -173,10 +84,12 @@ class _VocabMatchState extends State<VocabMatch> {
     final first = firstSelectedWord!;
     final second = secondSelectedWord!;
     
-    bool isMatch = (vocabPairsMap[first] == second) || 
-                   (vocabPairsMap[second] == first);
+    bool isMatch = (vocabPairsMap[first] == second) || (vocabPairsMap[second] == first);
     
     if (isMatch) {
+     // correctPlayer.seek(Duration.zero);
+     // correctPlayer.resume;
+     correctPlayer.play(AssetSource('audio/games/vocab_match_correct.wav'));
       setState(() {
         matchedWords.add(first);
         matchedWords.add(second);
@@ -184,25 +97,32 @@ class _VocabMatchState extends State<VocabMatch> {
         secondSelectedWord = null;
       });
     } else {
+      wrongPlayer.seek(Duration.zero);
+      wrongPlayer.resume();
       setState(() {
         flashingWords.add(first);
         flashingWords.add(second);
       });
       
-      Future.delayed(const Duration(milliseconds: 600), () {
+      Future.delayed(const Duration(milliseconds: 600), () { //has cards appear red
         setState(() {
           flashingWords.clear();
           firstSelectedWord = null;
           secondSelectedWord = null;
         });
+        if(matchedWords.length == vocabList.length){
+
+        }
       });
     }
+    print("matchWords: ${matchedWords.length}");
+    print("vocabList: ${vocabList.length}");
   }
 
   Color _getBorderColor(String word) {
-    if (flashingWords.contains(word)) return Colors.red;
-    if (matchedWords.contains(word)) return Colors.green;
-    if (firstSelectedWord == word || secondSelectedWord == word) {
+    if (flashingWords.contains(word)) return Colors.red; //if pair is wrong
+    if (matchedWords.contains(word)) return Colors.green; //highlight proper matches
+    if (firstSelectedWord == word || secondSelectedWord == word) { //highlight currently selected word
       return Colors.green;
     }
     return const Color(0xFFE5E5E5);
@@ -212,6 +132,19 @@ class _VocabMatchState extends State<VocabMatch> {
 Widget build(BuildContext context) {
   final screenWidth = MediaQuery.of(context).size.width;
   final screenHeight = MediaQuery.of(context).size.height;
+  final userNotifier = context.read<UserNotifier>(); // Get it here in build
+
+ WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (matchedWords.length == vocabList.length) {
+      _showCompletionPopup(context);
+      userNotifier.completeGame(widget.xp);
+      Future.delayed(const Duration(seconds: 2), () {
+        if (context.mounted) {
+          Navigator.pop(context);
+        }
+      });
+        }
+    });
 
   return Scaffold(
     backgroundColor: Colors.white,
@@ -278,6 +211,23 @@ Widget build(BuildContext context) {
     ),
   );
 }
+
+void _showCompletionPopup(BuildContext context) {
+ // _hasShownCompletion = true; // Prevent showing multiple times
+  
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('Game completed! +${widget.xp} XP earned'),
+      backgroundColor: const Color(0xFF58CC02),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.02),
+      ),
+      duration: const Duration(seconds: 2),
+    ),
+  );
+}
+
 }
 
 class VocabCard extends StatelessWidget {
@@ -295,7 +245,7 @@ class VocabCard extends StatelessWidget {
   final double screenHeight;
   final double screenWidth;
   final Color borderColor;
-  final bool isMatched;
+  final bool isMatched; //if word has already been matched properly, alter color
   final VoidCallback onTap;
 
   @override

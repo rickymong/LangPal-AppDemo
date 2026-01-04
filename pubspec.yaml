@@ -12,19 +12,32 @@ dependencies:
   flutter:
     sdk: flutter
     
-  country_flags: ^3.2.0
+  country_flags: ^1.0.0
   cupertino_icons: ^1.0.8
   provider: ^6.1.5+1
   intl: ^0.19.0
   google_fonts: ^6.2.1
   image_picker: ^1.1.1
   html: ^0.15.6
+  audioplayers: ^6.1.0
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
+  flutter_launcher_icons: ^0.9.1
   flutter_lints: ^5.0.0
+  flutter_app_name: ^0.1.1
+  xml: ^5.1.2
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/langpal_logos/LangPal-Primary-mascot.png"
+
+flutter_app_name:
+  name: "LangPal"
 
 flutter:
   uses-material-design: true
@@ -35,5 +48,6 @@ flutter:
     - assets/flags/
     - assets/langpal_logos/
     - assets/social_logos/
+    - assets/audio/games/
   #   - images/a_dot_ham.jpeg
 

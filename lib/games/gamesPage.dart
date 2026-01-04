@@ -22,7 +22,7 @@ class _GamesPageState extends State<GamesPage> {
       difficulty: 'Easy',
       icon: Icons.extension,
       summary: 'Match words with translations',
-      gamePage: VocabMatch()
+      gamePage: VocabMatch(xp: 20) //decouple link from Game?
     ),
     Game(
       name: 'Sentence Builder',
