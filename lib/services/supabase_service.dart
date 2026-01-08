@@ -2,25 +2,26 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../types/user.dart' as app_user;
 import '../types/aiPartner.dart';
 import '../types/chatMessage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Supabase configuration and service layer for LangPal
 class SupabaseService {
   static SupabaseClient get client => Supabase.instance.client;
 
   /// Initialize Supabase - call this in main() before runApp()
-  static Future<void> initialize() async {
+   static Future<void> initialize() async {
+    final supabaseUrl = dotenv.env['SUPABASE_URL'];
+    final supabaseKey = dotenv.env['SUPABASE_PUB_KEY'];
+
+    if (supabaseUrl == null || supabaseKey == null) {
+      throw Exception('Supabase environment variables not found');
+    }
+
     await Supabase.initialize(
-      url: const String.fromEnvironment(
-        'https://txnuqxgkegnrekwmmvgx.supabase.co/',
-        defaultValue: 'https://txnuqxgkegnrekwmmvgx.supabase.co/',
-      ),
-      anonKey: const String.fromEnvironment(
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bnVxeGdrZWducmVrd21tdmd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNzE1MzcsImV4cCI6MjA4MjY0NzUzN30.1JUYiqCoi7EkZo2EJWY2EbfzWLswbq8q3Tf68if8ydk',
-        defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bnVxeGdrZWducmVrd21tdmd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNzE1MzcsImV4cCI6MjA4MjY0NzUzN30.1JUYiqCoi7EkZo2EJWY2EbfzWLswbq8q3Tf68if8ydk',
-      ),
+      url: supabaseUrl,
+      anonKey: supabaseKey,
     );
   }
-
   /// Get the currently logged in user's ID
   static String? get currentUserId => client.auth.currentUser?.id;
 

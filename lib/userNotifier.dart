@@ -63,8 +63,9 @@ Future<void> _init() async {
     } else {
       // Not logged in - show auth page
       _isLoading = false;
-      notifyListeners();
+      
     }
+    notifyListeners();
   }
 
   /// Continue without account (demo/guest mode)
@@ -86,10 +87,10 @@ Future<void> _init() async {
       _aiPartners = await SupabaseService.fetchUserAiPartners();
 
       // Fetch conversations for each AI partner
-      _conversations = {};
+      //_conversations = {};
       for (final partner in _aiPartners) {
         final messages = await SupabaseService.fetchMessages(partner.id);
-        _conversations[partner] = messages;
+        conversations[partner] = messages;
       }
 
       _isLoading = false;

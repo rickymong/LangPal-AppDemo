@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/profile/profile.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
 import '../games/gamesPage.dart';
@@ -105,27 +106,32 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       children: [
         // Parrot icon (using emoji in a container for visual)
-        Container(
-          width: 70,
-          height: 70,
-          // decoration: BoxDecoration(
-          //   gradient: const LinearGradient(
-          //     colors: [Color(0xFF58CC02), Color(0xFF89E219)],
-          //     begin: Alignment.topLeft,
-          //     end: Alignment.bottomRight,
-          //   ),
-          //   borderRadius: BorderRadius.circular(12),
-          // ),
-          // child: const Center(
-          //   child: Text(
-          //     '🦜',
-          //     style: TextStyle(fontSize: 28),
-          //   ),
-          // ),
-          child: Image.asset(
-            'assets/langpal_logos/LangPal-Primary-mascot.png',
-            //height: screenHeight * 0.25, //image size
-            fit: BoxFit.contain, //keeps the whole logo visable
+        GestureDetector(
+          onTap: () => {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => Profile()))
+          },
+          child: Container(
+            width: 70,
+            height: 70,
+            // decoration: BoxDecoration(
+            //   gradient: const LinearGradient(
+            //     colors: [Color(0xFF58CC02), Color(0xFF89E219)],
+            //     begin: Alignment.topLeft,
+            //     end: Alignment.bottomRight,
+            //   ),
+            //   borderRadius: BorderRadius.circular(12),
+            // ),
+            // child: const Center(
+            //   child: Text(
+            //     '🦜',
+            //     style: TextStyle(fontSize: 28),
+            //   ),
+            // ),
+            child: Image.asset(
+              'assets/langpal_logos/LangPal-Primary-mascot.png',
+              //height: screenHeight * 0.25, //image size
+              fit: BoxFit.contain, //keeps the whole logo visable
+            ),
           ),
         ),
         const SizedBox(width: 12),
