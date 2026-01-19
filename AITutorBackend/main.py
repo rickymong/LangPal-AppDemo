@@ -148,3 +148,4 @@ def score_matching(payload: MatchingScoreRequest) -> dict:
         return score_matching_game(payload.user_id, pairs)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
