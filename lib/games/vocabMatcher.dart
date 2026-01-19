@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/games/gameTimer.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -28,6 +31,9 @@ class _VocabMatchState extends State<VocabMatch> {
   final AudioPlayer correctPlayer = AudioPlayer();
   final AudioPlayer wrongPlayer = AudioPlayer();
 
+  bool timeUp = false;
+  double seconds = 5;
+
   @override
   void initState() {
     super.initState();
@@ -46,6 +52,13 @@ class _VocabMatchState extends State<VocabMatch> {
     vocabList.shuffle();
 
     _preloadSounds();
+  }
+  @override
+  void dispose() {
+    correctPlayer.dispose();
+    wrongPlayer.dispose();
+    super.dispose();
+
   }
 
   int get _matchedPairs => matchedWords.length ~/ 2;
@@ -145,6 +158,8 @@ Widget build(BuildContext context) {
       });
         }
     });
+  
+
 
   return Scaffold(
     backgroundColor: Colors.white,
@@ -173,13 +188,23 @@ Widget build(BuildContext context) {
             vertical: screenHeight * 0.02,
             horizontal: screenWidth * 0.05,
           ),
-          child: Text(
-            '$_matchedPairs/$_totalPairs completed',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: _progressColor,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '$_matchedPairs/$_totalPairs completed',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: _progressColor,
+                ),
+              ),
+              SizedBox(width: screenWidth * 0.10),
+              GameTimer(seconds: seconds, onFinish: () {
+                if(!mounted) return;
+                showTimesUpModal(context: context, score: _matchedPairs, total: _totalPairs);
+                }) //onFinish: () {_showTimesUpPopup(context, _matchedPairs, _totalPairs); }
+            ],
           ),
         ),
         
@@ -223,12 +248,63 @@ void _showCompletionPopup(BuildContext context) {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.02),
       ),
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 4),
     ),
   );
 }
 
+void showTimesUpModal({
+  required BuildContext context,
+  required int score,
+  required int total
+}) {
+  bool popped = false;
+
+  void exitFlow() {
+    if (popped) return;
+    popped = true;
+
+    Navigator.of(context).pop(); // close modal
+    Navigator.of(context).pop(); // pop game screen
+  }
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) {
+      // Auto-exit after 5 seconds
+      Future.delayed(const Duration(seconds: 5), exitFlow);
+
+      return AlertDialog(
+        title: const Text(
+          "Time’s Up!",
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          "Score: $score / $total",
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: exitFlow,
+            child: const Text("OK"),
+          ),
+        ],
+      );
+    },
+  );
 }
+
+
+
+}
+
+
 
 class VocabCard extends StatelessWidget {
   const VocabCard({
@@ -291,3 +367,4 @@ class VocabCard extends StatelessWidget {
     );
   }
 }
+
