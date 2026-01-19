@@ -70,3 +70,4 @@ def score_fill_blank_game(user_id: str, questions: List[Dict[str, str]]) -> Dict
     summary = _score_fill_blank_questions(questions)
     summary["language"] = context["language"]
     return summary
+
