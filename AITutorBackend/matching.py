@@ -54,3 +54,4 @@ def score_matching_game(user_id: str, pairs: List[Dict[str, str]]) -> Dict[str, 
     summary = _score_matching_pairs(pairs)
     summary["language"] = context["language"]
     return summary
+
