@@ -256,22 +256,31 @@ class _PasswordEntryPageState extends State<PasswordEntryPage> {
                   ),
                   SizedBox(height: screenHeight * 0.02),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         // Handle sign in logic here
-                        userNotifier.signIn(email: widget.email, password: _passwordController.text);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Signed in successfully!'),
-                          ),
-                        );
-                        // Call signin with widget.email and _passwordController.text
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => HomeScreen()
-                          ),
-                        );
+                        bool success = await userNotifier.signIn(email: widget.email, password: _passwordController.text);
+                        if(success){
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Signed in successfully!'),
+                            ),
+                          );
+                          // Call signin with widget.email and _passwordController.text
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HomeScreen()
+                            ),
+                          );
+                        }//end if
+                        else{
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Signed in failed - try again'),
+                            ),
+                          );
+                        }
                       }                      
                     },
                     style: ElevatedButton.styleFrom(

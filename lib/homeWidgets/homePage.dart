@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/profile/profile.dart';
+import 'package:langpal_prototype/types/aiPartner.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
+import '../conversations/chatPage.dart';
 import '../games/gamesPage.dart';
 import '../types/lesson.dart';
 import 'progressBar.dart';
@@ -203,6 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildQuickActions() {
+    AiPartner dummyPartner = AiPartner(name: "Mr.Test", id: "999", language: "spanish", flag_path: "assets/flags/spain_flag.jpr");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -225,7 +228,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 backgroundColor: const Color(0xFFE0F4FF),
                 iconColor: const Color(0xFF1CB0F6),
                 onTap: () {
-                  // Handle AI Tutor tap
+                  Navigator.push(context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatPage(aiPartner: dummyPartner),
+                  ));
                 },
               ),
             ),

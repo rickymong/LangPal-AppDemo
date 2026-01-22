@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/landingPage/loadingScreen.dart';
 import 'package:langpal_prototype/types/aiPartner.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
@@ -45,7 +46,7 @@ void dispose(){
     return Container(
       constraints: BoxConstraints(
         minHeight: 50,
-        maxHeight: 300,
+        maxHeight: 500,
       ),
       decoration: BoxDecoration(
         color: Colors.grey[100],
@@ -148,71 +149,74 @@ class _ChatInputState extends State<ChatInput> {
     super.initState();
   
   }
-
-  Widget build(BuildContext context) {
-    //String userId = context.read<UserNotifier>().user!.id;
-    User user = context.watch<UserNotifier>().user!; //gets user info - triggers refresh if state updates
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black,
-            offset: const Offset(0, -1),
-            blurRadius: 5,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _textController,
-              decoration: InputDecoration(
-                hintText: 'Type a message...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24.0),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Colors.grey[100],
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 10.0,
-                ),
+Widget build(BuildContext context) {
+  //String userId = context.read<UserNotifier>().user!.id;
+  final screenHeight = MediaQuery.of(context).size.height;
+  final screenWidth = MediaQuery.of(context).size.width;
+  User user = context.watch<UserNotifier>().user!; //gets user info - triggers refresh if state updates
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05, vertical: screenHeight * 0.01),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black,
+          offset: const Offset(0, -1),
+          blurRadius: 5,
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _textController,
+            decoration: InputDecoration(
+              hintText: 'Type a message...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(screenWidth * 0.06),
+                borderSide: BorderSide.none,
               ),
-              textCapitalization: TextCapitalization.sentences,
+              filled: true,
+              fillColor: Colors.grey[100],
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: screenWidth * 0.04,
+                vertical: screenHeight * 0.012,
+              ),
             ),
+            textCapitalization: TextCapitalization.sentences,
           ),
-          const SizedBox(width: 8.0),
-          CircleAvatar(//send button
-            backgroundColor: Color.fromARGB(255, 7, 172, 190),
-            child: Consumer<UserNotifier>(
-              builder: (context, userNotifier, child){
-              return IconButton(
-                icon: const Icon(Icons.send, color: Colors.white),
-                onPressed: () {
-                  // Send message logic
-                  if (_textController.text.trim().isNotEmpty) {
-                    setState(() {
-                      //send new message object to list of messages in ChatContainer;
-                      List<ChatMessage> messages = _sendMessage(true, _textController.text, user.id);
-                      userNotifier.addMessage(widget.aiPartner, messages[0]);
-                      userNotifier.addMessage(widget.aiPartner, messages[1]);
-                     _textController.clear();
-                    });
-                  }
-                },
-              );
-              }
+        ),
+        SizedBox(width: screenWidth * 0.02),
+        CircleAvatar(//send button
+          backgroundColor: Color.fromARGB(255, 7, 172, 190),
+          radius: screenWidth * 0.06,
+          child: Consumer<UserNotifier>(
+            builder: (context, userNotifier, child){
+            return IconButton(
+              icon: Icon(Icons.send, color: Colors.white, size: screenWidth * 0.05),
+              onPressed: () {
+                // Send message logic
+                if (_textController.text.trim().isNotEmpty) {
+                  setState(() {
+                    //send new message object to list of messages in ChatContainer;
+                    List<ChatMessage> messages = _sendMessage(true, _textController.text, user.id);
+                    userNotifier.addMessage(widget.aiPartner, messages[0]);
+                    userNotifier.addMessage(widget.aiPartner, messages[1]);
+                   _textController.clear();
+                  });
+                }
+              },
+            );
+            }
 
-            ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
   List<ChatMessage> _sendMessage(bool isUser, String text, String userId) { //id generation needs to be made secure
     final ChatMessage message = ChatMessage(id: Random().nextInt(1000000000), userId: userId, aiID: widget.aiPartner.id, text: text, isFromUser: isUser, timestamp: DateTime.now());
     //TODO: send message to AI and catch response - trigger waiting UI?

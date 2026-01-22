@@ -77,14 +77,18 @@ Future<void> _init() async {
   Future<void> loadUserData() async {
     _isLoading = true;
     _error = null;
-    notifyListeners();
+   // notifyListeners();
+    print("IN LOAD USER DATA");
 
     try {
       // Fetch user profile
       _user = await SupabaseService.fetchUserProfile();
-
+      if(_user != null){
+        print("user id: ${user!.id}");
+      }
       // Fetch user's AI partners
       _aiPartners = await SupabaseService.fetchUserAiPartners();
+
 
       // Fetch conversations for each AI partner
       //_conversations = {};
@@ -192,8 +196,12 @@ Future<void> _init() async {
     required String email,
     required String password,
   }) async {
+    print("In notifier signin");
     try {
-      await SupabaseService.signIn(email: email, password: password);
+      final response = await SupabaseService.signIn(email: email, password: password);
+      if(response != null){
+        print("response in sign in not null");
+      }
       await loadUserData();
       return true;
     } catch (e) {

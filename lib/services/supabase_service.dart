@@ -50,10 +50,16 @@ class SupabaseService {
     required String email,
     required String password,
   }) async {
-    return await client.auth.signInWithPassword(
+    print("in supabase service sign in");
+    final response = client.auth.signInWithPassword(
       email: email,
       password: password,
     );
+    if(response == null){
+      print("NULL SIGNINWITHPASSWORD RESPONSE");
+      print(response.toString());
+    }
+    return response;
   }
 
   /// Sign out
@@ -67,9 +73,10 @@ class SupabaseService {
 
   /// Fetch user profile from database
   static Future<app_user.User?> fetchUserProfile() async {
+    print("in fetchUserProfile");
     final userId = currentUserId;
     if (userId == null) return null;
-
+    
     final response = await client
         .from('user_profiles')
         .select()
@@ -85,7 +92,7 @@ class SupabaseService {
     final languages = (languagesResponse as List)
         .map((e) => e['language'] as String)
         .toList();
-
+    print("fetcherUserProfile: user name: ${response["name"]}");
     return app_user.User(
       id: response['id'],
       name: response['name'],

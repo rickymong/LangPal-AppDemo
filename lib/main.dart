@@ -35,7 +35,6 @@ class MyApp extends StatelessWidget {
       title: 'LangPal',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
