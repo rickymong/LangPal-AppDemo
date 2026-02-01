@@ -24,10 +24,19 @@ class _SentenceBuilderState extends State<SentenceBuilder>{
 
   double seconds = 5;
   bool timesUp = false;
+  bool winGame = false;
+  bool gameComplete = false; //a 1 time flag to avoid rerunning of win/loss condition results
 
   final AudioPlayer correctPlayer = AudioPlayer();
   final AudioPlayer wrongPlayer = AudioPlayer();
   
+
+  @override
+  void didUpdateWidget(SentenceBuilder oldWidget){
+    super.didUpdateWidget(oldWidget);
+    _checkTimeUp();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -58,26 +67,66 @@ class _SentenceBuilderState extends State<SentenceBuilder>{
   }
 
   Color _getBorderColor(String word) {
-    if (selectedWord != null && selectedWord != blankWord && selectedWord == word) return Colors.red; //mark red if wrong
-    else if (selectedWord == blankWord && blankWord == word) return Colors.green; //mark green if correct
+    if (selectedWord == word && word.toLowerCase() != blankWord.toLowerCase()){
+      return Colors.red; //mark red if wrong
+    } 
+    else if (selectedWord == blankWord && blankWord == word && winGame) return Colors.green; //mark green if correct
     //else be grey (default)
     return const Color(0xFFE5E5E5);
   }
+  
+
   void _handleCardTap(String word){
-    if(timesUp = true){
-      return;
-    }
+    if (gameComplete) return; //prevents changing answers once game is over
+
     setState(() {
       selectedWord = word;
-      if(selectedWord == blankWord){
-        //win game
-        correctPlayer.play(AssetSource('audio/games/vocab_match_correct.wav'));
-      }
-      else{
-        wrongPlayer.play(AssetSource('audio/games/vocab_match_correct.wav'));
+    });
+    _checkMatch();
+  }
+  void _checkMatch(){
+    if (gameComplete) return; //prevent repeat win logic from running
 
+    bool isMatch = selectedWord!.toLowerCase() == blankWord.toLowerCase();
+    if(isMatch){
+     //correctPlayer.play(AssetSource('audio/games/vocab_match_correct.wav'));
+      correctPlayer.seek(Duration.zero);
+      correctPlayer.resume();
+     setState(() {
+       winGame = true;
+     });
+     _completeGame(result: true);
+    }
+    else{
+      wrongPlayer.seek(Duration.zero);
+      wrongPlayer.resume();
+    }
+  }
+
+  void _completeGame({required bool result}){
+    if(gameComplete) return;
+    gameComplete = true;
+    print("game complete");
+    final userNotifier = Provider.of<UserNotifier>(context, listen: false);
+    _showCompletionPopup(context, result);
+    if(result == true){
+      userNotifier.completeGame(widget.xp);
+    }
+    Future.delayed(const Duration(seconds: 2), (){
+      if(context.mounted){
+        Navigator.pop(context);
       }
     });
+       //   if(context.mounted){
+       // Navigator.pop(context);
+     // }
+  }
+
+  void _checkTimeUp(){
+    if(gameComplete) return;
+    if(timesUp){
+      _completeGame(result: false);
+    }
   }
 
   @override
@@ -86,25 +135,29 @@ class _SentenceBuilderState extends State<SentenceBuilder>{
     final screenHeight = MediaQuery.of(context).size.height;
     final userNotifier = context.read<UserNotifier>(); // Get it here in build
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (selectedWord == blankWord) {
-        _showCompletionPopup(context, true);
-        userNotifier.completeGame(widget.xp);
-        Future.delayed(const Duration(seconds: 2), () {
-          if (context.mounted) {
-            Navigator.pop(context);
-          }
-        });
-      }
-      if(timesUp == true){
-        _showCompletionPopup(context, false);
-        Future.delayed(const Duration(seconds: 2), (){
-          if(context.mounted){
-            Navigator.pop(context);
-          }
-        });
-      }
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (selectedWord == blankWord) {
+    //     setState(() {
+    //       //winGame = false;
+    //       //selectedWord = null;
+    //     });
+    //     _showCompletionPopup(context, true);
+    //     userNotifier.completeGame(widget.xp);
+    //     // Future.delayed(const Duration(seconds: 2), () {
+    //     //   if (context.mounted) {
+    //     //     Navigator.pop(context);
+    //     //   }
+    //     // });
+    //   }
+    //   else if(timesUp == true){
+    //     _showCompletionPopup(context, false);
+    //     Future.delayed(const Duration(seconds: 2), (){
+    //       if(context.mounted){
+    //         Navigator.pop(context);
+    //       }
+    //     });
+    //   }
+    // });
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -130,9 +183,11 @@ class _SentenceBuilderState extends State<SentenceBuilder>{
           GameTimer(seconds: seconds, onFinish: () {
                 if(!mounted) return;
                 //_showCompletionPopup(context, false); //change to a local function that sets a local timer variable to finished - triggering the post frame callback
-                  setState(() {
-                    timesUp = true;
-                  });
+                  if(winGame){
+                    setState(() {
+                      timesUp = true;
+                    });
+                  }
                   
                 }),
           Row(
@@ -170,7 +225,7 @@ class _SentenceBuilderState extends State<SentenceBuilder>{
   }
   void _showCompletionPopup(BuildContext context, bool won) {
  // _hasShownCompletion = true; // Prevent showing multiple times
-  
+  print("in popUp");
   ScaffoldMessenger.of(context).showSnackBar(
     
     SnackBar(
@@ -180,7 +235,7 @@ class _SentenceBuilderState extends State<SentenceBuilder>{
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.02),
       ),
-      //duration: const Duration(seconds: 4),
+      //duration: const Duration(seconds: 2),
     ),
   );
 }

@@ -33,7 +33,7 @@ class _VocabMatchState extends State<VocabMatch> {
 
   bool timeUp = false;
   double seconds = 5;
-
+  bool gameComplete = false;
   @override
   void initState() {
     super.initState();
@@ -53,6 +53,15 @@ class _VocabMatchState extends State<VocabMatch> {
 
     _preloadSounds();
   }
+
+    @override
+  void didUpdateWidget(VocabMatch oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _checkTimesUp(); // ✅ Check if time is up
+    _checkIfWin(); // ✅ Check if all matches found
+  }
+
+
   @override
   void dispose() {
     correctPlayer.dispose();
@@ -79,6 +88,7 @@ class _VocabMatchState extends State<VocabMatch> {
   }
   
   void _handleCardTap(String word) {
+    if (gameComplete) return;
     if (matchedWords.contains(word) || flashingWords.contains(word)) return;
     
     setState(() {
@@ -94,6 +104,7 @@ class _VocabMatchState extends State<VocabMatch> {
   }
 
   void _checkMatch() {
+    if(gameComplete) return;
     final first = firstSelectedWord!;
     final second = secondSelectedWord!;
     
@@ -109,6 +120,7 @@ class _VocabMatchState extends State<VocabMatch> {
         firstSelectedWord = null;
         secondSelectedWord = null;
       });
+      _checkIfWin();
     } else {
       wrongPlayer.seek(Duration.zero);
       wrongPlayer.resume();
@@ -132,6 +144,42 @@ class _VocabMatchState extends State<VocabMatch> {
     print("vocabList: ${vocabList.length}");
   }
 
+   void _checkIfWin() {
+    if (gameComplete) return;
+    
+    if (matchedWords.length == vocabList.length) {
+      _completeGame(won: true);
+    }
+  }
+
+  void _checkTimesUp() {
+    if (gameComplete) return;
+    
+    if (timeUp) {
+      _completeGame(won: false);
+    }
+  }
+
+  void _completeGame({required bool won}) {
+    if (gameComplete) return;
+    
+    gameComplete = true;
+    
+    final userNotifier = Provider.of<UserNotifier>(context, listen: false);
+    
+    if (won) {
+      userNotifier.completeGame(widget.xp);
+    }
+    
+    _showCompletionPopup(context);
+    
+    Future.delayed(const Duration(seconds: 2), () {
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+    });
+  }
+
   Color _getBorderColor(String word) {
     if (flashingWords.contains(word)) return Colors.red; //if pair is wrong
     if (matchedWords.contains(word)) return Colors.green; //highlight proper matches
@@ -147,20 +195,18 @@ Widget build(BuildContext context) {
   final screenHeight = MediaQuery.of(context).size.height;
   final userNotifier = context.read<UserNotifier>(); // Get it here in build
 
- WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (matchedWords.length == vocabList.length) {
-      _showCompletionPopup(context);
-      userNotifier.completeGame(widget.xp);
-      Future.delayed(const Duration(seconds: 2), () {
-        if (context.mounted) {
-          Navigator.pop(context);
-        }
-      });
-        }
-    });
+//  WidgetsBinding.instance.addPostFrameCallback((_) {
+//     if (matchedWords.length == vocabList.length) {
+//       _showCompletionPopup(context);
+//       userNotifier.completeGame(widget.xp);
+//       Future.delayed(const Duration(seconds: 2), () {
+//         if (context.mounted) {
+//           Navigator.pop(context);
+//         }
+//       });
+//         }
+//     });
   
-
-
   return Scaffold(
     backgroundColor: Colors.white,
     appBar: AppBar(
@@ -202,7 +248,8 @@ Widget build(BuildContext context) {
               SizedBox(width: screenWidth * 0.10),
               GameTimer(seconds: seconds, onFinish: () {
                 if(!mounted) return;
-                showTimesUpModal(context: context, score: _matchedPairs, total: _totalPairs);
+
+                if(!gameComplete) showTimesUpModal(context: context, score: _matchedPairs, total: _totalPairs);
                 }) //onFinish: () {_showTimesUpPopup(context, _matchedPairs, _totalPairs); }
             ],
           ),
