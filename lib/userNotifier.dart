@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/types/chatMessage.dart';
 import 'package:langpal_prototype/services/supabase_service.dart';
-import 'types/user.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'types/user.dart' as User;
 import 'types/aiPartner.dart';
 
 //Notifier for managing state of user
@@ -9,9 +12,10 @@ import 'types/aiPartner.dart';
 class UserNotifier extends ChangeNotifier{
 
    
-  User? _user;
-  
-  User? get user => _user;
+  User.User? _user;
+  StreamSubscription<AuthState>? _authSubscription;
+
+  User.User? get user => _user;
 
   //Profile stats (queried frm DB)
   int _dayStreak = 7;
@@ -53,7 +57,9 @@ class UserNotifier extends ChangeNotifier{
   bool get isLoggedIn => SupabaseService.isLoggedIn;
 
   UserNotifier() {
-    _init();
+    _initAuthListener();
+    _checkInitialState();
+  //_init();
   }
 
 
@@ -65,6 +71,49 @@ Future<void> _init() async {
       _isLoading = false;
       
     }
+    notifyListeners();
+  }
+  
+@override
+void dispose() {
+  _authSubscription?.cancel();
+  super.dispose();
+}
+
+void _initAuthListener() {
+    _authSubscription = SupabaseService.client.auth.onAuthStateChange.listen(
+      (AuthState data) {
+        final AuthChangeEvent event = data.event;
+        
+        if (event == AuthChangeEvent.signedIn) {
+          // User signed in (via email/password OR Google SSO)
+          loadUserData();
+        } else if (event == AuthChangeEvent.signedOut) {
+          // User signed out
+          _clearUserData();
+        } else if (event == AuthChangeEvent.tokenRefreshed) {
+          // Optional: handle token refresh if needed
+          print('Token refreshed');
+        }
+      },
+    );
+  }
+/// Check initial auth state on app start
+Future<void> _checkInitialState() async {
+  if (SupabaseService.isLoggedIn) {
+    await loadUserData();
+  } else {
+    // Not logged in - stop loading
+    _isLoading = false;
+    notifyListeners();
+  }
+}
+
+ void _clearUserData() {
+    _user = null;
+    _aiPartners = [];
+    _conversations = {};
+    _error = null;
     notifyListeners();
   }
 
@@ -154,7 +203,7 @@ Future<void> _init() async {
     _aiPartners = [ai];
     _conversations = {ai: convo};
     
-    _user = User(
+    _user = User.User(
       id: "user_001",
       name: "Adam Hirshson",
       email: "Adam@Hirshson.com",

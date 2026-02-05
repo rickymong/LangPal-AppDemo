@@ -64,43 +64,45 @@ class _HomeScreenState extends State<HomeScreen> {
       icon: Icons.luggage,
     ),
   ];
+@override
+Widget build(BuildContext context) {
+  return Consumer<UserNotifier>(
+    builder: (context, userNotifier, child) {
+      // Show loading if data is still loading
+      if (userNotifier.isLoading) {
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _isDarkMode ? const Color(0xFF1F1F1F) : Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header with icon, text, and dark mode toggle
-                _buildHeader(),
-                const SizedBox(height: 32),
-
-                // Stats row with 3 boxes
-                _buildStatsRow(),
-                const SizedBox(height: 32),
-
-                // Today's Progress section
-                DailyProgress(isDarkMode: _isDarkMode),
-                const SizedBox(height: 32),
-
-                // Quick Actions
-                _buildQuickActions(),
-                const SizedBox(height: 32),
-
-                // Your Lessons section
-                _buildLessonsSection(),
-              ],
+      // Show your actual home screen content
+      return Scaffold(
+        backgroundColor: _isDarkMode ? const Color(0xFF1F1F1F) : Colors.white,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 32),
+                  _buildStatsRow(),
+                  const SizedBox(height: 32),
+                  DailyProgress(isDarkMode: _isDarkMode),
+                  const SizedBox(height: 32),
+                  _buildQuickActions(),
+                  const SizedBox(height: 32),
+                  _buildLessonsSection(),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    },
+  );
+}
 
   Widget _buildHeader() {
     final screenHeight = MediaQuery.of(context).size.height;
