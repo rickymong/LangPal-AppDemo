@@ -66,6 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 @override
 Widget build(BuildContext context) {
+  final screenHeight = MediaQuery.of(context).size.height;
+
   return Consumer<UserNotifier>(
     builder: (context, userNotifier, child) {
       // Show loading if data is still loading
@@ -86,13 +88,13 @@ Widget build(BuildContext context) {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildHeader(),
-                  const SizedBox(height: 32),
+                  SizedBox(height: screenHeight * 0.04),
                   _buildStatsRow(),
-                  const SizedBox(height: 32),
+                  SizedBox(height: screenHeight * 0.04),
                   DailyProgress(isDarkMode: _isDarkMode),
-                  const SizedBox(height: 32),
+                  SizedBox(height: screenHeight * 0.04),
                   _buildQuickActions(),
-                  const SizedBox(height: 32),
+                  SizedBox(height: screenHeight * 0.04),
                   _buildLessonsSection(),
                 ],
               ),
@@ -177,6 +179,9 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildStatsRow() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Row(
       children: [
         Expanded(
@@ -186,7 +191,7 @@ Widget build(BuildContext context) {
             },
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: screenWidth * 0.02),
         Expanded(
           child: Consumer<UserNotifier>(
             builder: (context, appState, child) {
@@ -194,7 +199,7 @@ Widget build(BuildContext context) {
             },
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: screenWidth * 0.02),
         Expanded(
           child: Consumer<UserNotifier>(
             builder: (context, appState, child) {
@@ -207,7 +212,7 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildQuickActions() {
-    AiPartner dummyPartner = AiPartner(name: "Mr.Test", id: "999", language: "spanish", flag_path: "assets/flags/spain_flag.jpr");
+    AiPartner dummyPartner = AiPartner(name: "Johnson", id: "999", language: "Spanish", flag_path: "assets/flags/spain_flag.jpr");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -519,8 +524,8 @@ class DailyProgress extends StatelessWidget {
             ProgressBar(
               progress: progressFraction,
               height: 12,
-              backgroundColor:
-                  _isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFE5E5E5),
+              backgroundColor: const Color.fromARGB(255, 197, 194, 194),
+                 // _isDarkMode ? const Color.fromARGB(255, 117, 117, 117) : const Color(0xFFE5E5E5),
               progressColor: const Color(0xFF58CC02),
             ),
           ],

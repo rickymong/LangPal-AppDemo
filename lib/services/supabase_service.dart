@@ -72,30 +72,24 @@ class SupabaseService {
 
   //SSO Methods
   static Future<AuthResponse> googleSignIn() async {
-  /// TODO: update the Web client ID with your own.
-  ///
+
   /// Web Client ID that you registered with Google Cloud.
   const webClientId = '435981250230-imcjnk5arlhb9bh4g74l99988t1c7e2a.apps.googleusercontent.com';
 
-  /// TODO: update the iOS client ID with your own.
-  ///
   /// iOS Client ID that you registered with Google Cloud.
   const iosClientId = '435981250230-1aisj7gkplg30mdhqi86gg53gqr91e1h.apps.googleusercontent.com';
 
-  // Google sign in on Android will work without providing the Android
-  // Client ID registered on Google Cloud.
+
 
   final GoogleSignIn signIn = GoogleSignIn.instance;
-
-  // At the start of your app, initialize the GoogleSignIn instance
   unawaited(
     signIn.initialize(clientId: iosClientId, serverClientId: webClientId));
 
   // Perform the sign in
   final googleAccount = await signIn.authenticate();
 final googleAuthorization = await googleAccount.authorizationClient.authorizationForScopes([
-    'email',  // Required scope
-    'profile', // Optional but recommended
+    'email',
+    'profile',
   ]);  final googleAuthentication = googleAccount.authentication;
   final idToken = googleAuthentication.idToken;
   final accessToken = googleAuthorization?.accessToken;
@@ -110,6 +104,7 @@ final googleAuthorization = await googleAccount.authorizationClient.authorizatio
     accessToken: accessToken,
   );
 }
+
   // ============================================
   // USER PROFILE METHODS
   // ============================================

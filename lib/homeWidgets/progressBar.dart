@@ -16,24 +16,36 @@ class ProgressBar extends StatelessWidget {
     this.borderRadius,
   }) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: borderRadius ?? BorderRadius.circular(height / 2),
-      ),
-      child: FractionallySizedBox(
-        alignment: Alignment.centerLeft,
-        widthFactor: progress.clamp(0.0, 1.0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: progressColor,
-            borderRadius: borderRadius ?? BorderRadius.circular(height / 2),
-          ),
-        ),
-      ),
-    );
-  }
+@override
+Widget build(BuildContext context) {
+  return ClipRRect(
+    borderRadius: borderRadius ?? BorderRadius.circular(height / 2),
+    child: LinearProgressIndicator(
+      value: progress.clamp(0.0, 1.0),
+      backgroundColor: backgroundColor,
+      valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+      minHeight: height,
+    ),
+  );
+}
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Container(
+  //     height: height,
+  //     decoration: BoxDecoration(
+  //       color: backgroundColor,
+  //       borderRadius: borderRadius ?? BorderRadius.circular(height / 2),
+  //     ),
+  //     child: FractionallySizedBox(
+  //       alignment: Alignment.centerLeft,
+  //       widthFactor: progress.clamp(0.0, 1.0),
+  //       child: Container(
+  //         decoration: BoxDecoration(
+  //           color: progressColor,
+  //           borderRadius: borderRadius ?? BorderRadius.circular(height / 2),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 }

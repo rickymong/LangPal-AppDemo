@@ -1,7 +1,5 @@
-import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:langpal_prototype/landingPage/loadingScreen.dart';
 import 'package:langpal_prototype/types/aiPartner.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
@@ -14,72 +12,6 @@ import 'message_service.dart';
 //**READ ME **
 //this file contains multiple classes that comprise the chat logic -- feel free to separate into multiple files if this seems to big or confusing due to multiple classes
 
-class ChatContainer extends StatefulWidget { //Container that holds the messages
-  List<ChatMessage> messages;
-   ChatContainer({
-    super.key, 
-    required this.messages,
-  });
-
-@override
-  State<ChatContainer> createState() => _ChatContainer();
-}
-class _ChatContainer extends State<ChatContainer>{
-  final ScrollController? scrollController = ScrollController();
-  //late StreamSubscription<ChatMessage> _subscription;
- 
-  @override
-void initState() {
-  super.initState();
-
-}
-
-@override
-void dispose(){
- // _subscription.cancel();
-  scrollController?.dispose();
-  super.dispose();
-}
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        minHeight: 50,
-        maxHeight: 500,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black,
-            blurRadius: 10,
-            spreadRadius: 0.5,
-          ),
-        ],
-      ),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: ListView.builder(
-          controller: scrollController,
-          padding: const EdgeInsets.all(12),
-          itemCount: widget.messages.length,
-          physics: const BouncingScrollPhysics(),
-          shrinkWrap: true,
-          itemBuilder: (context, index) {
-            final message = widget.messages[index];
-            return MessageBubble(
-              message: message.text,
-              isUser: message.isFromUser,
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
 
 class MessageBubble extends StatelessWidget { //message UI
   final String message;
@@ -150,17 +82,16 @@ class _ChatInputState extends State<ChatInput> {
   
   }
 Widget build(BuildContext context) {
-  //String userId = context.read<UserNotifier>().user!.id;
-  final screenHeight = MediaQuery.of(context).size.height;
   final screenWidth = MediaQuery.of(context).size.width;
-  User user = context.watch<UserNotifier>().user!; //gets user info - triggers refresh if state updates
+  User user = context.watch<UserNotifier>().user!;
+  
   return Container(
-    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05, vertical: screenHeight * 0.01),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Fixed values
     decoration: BoxDecoration(
       color: Colors.white,
       boxShadow: [
         BoxShadow(
-          color: Colors.black,
+          color: Colors.black.withOpacity(0.1),
           offset: const Offset(0, -1),
           blurRadius: 5,
         ),
@@ -174,49 +105,45 @@ Widget build(BuildContext context) {
             decoration: InputDecoration(
               hintText: 'Type a message...',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(screenWidth * 0.06),
+                borderRadius: BorderRadius.circular(24), // Fixed value
                 borderSide: BorderSide.none,
               ),
               filled: true,
               fillColor: Colors.grey[100],
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: screenWidth * 0.04,
-                vertical: screenHeight * 0.012,
-              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ), // Fixed values
             ),
             textCapitalization: TextCapitalization.sentences,
           ),
         ),
-        SizedBox(width: screenWidth * 0.02),
-        CircleAvatar(//send button
+        const SizedBox(width: 8), // Fixed value
+        CircleAvatar(
           backgroundColor: Color.fromARGB(255, 7, 172, 190),
-          radius: screenWidth * 0.06,
+          radius: 24, // Fixed value
           child: Consumer<UserNotifier>(
-            builder: (context, userNotifier, child){
-            return IconButton(
-              icon: Icon(Icons.send, color: Colors.white, size: screenWidth * 0.05),
-              onPressed: () {
-                // Send message logic
-                if (_textController.text.trim().isNotEmpty) {
-                  setState(() {
-                    //send new message object to list of messages in ChatContainer;
-                    List<ChatMessage> messages = _sendMessage(true, _textController.text, user.id);
-                    userNotifier.addMessage(widget.aiPartner, messages[0]);
-                    userNotifier.addMessage(widget.aiPartner, messages[1]);
-                   _textController.clear();
-                  });
-                }
-              },
-            );
+            builder: (context, userNotifier, child) {
+              return IconButton(
+                icon: const Icon(Icons.send, color: Colors.white, size: 20), // Fixed size
+                onPressed: () {
+                  if (_textController.text.trim().isNotEmpty) {
+                    setState(() {
+                      List<ChatMessage> messages = _sendMessage(true, _textController.text, user.id);
+                      userNotifier.addMessage(widget.aiPartner, messages[0]);
+                      userNotifier.addMessage(widget.aiPartner, messages[1]);
+                      _textController.clear();
+                    });
+                  }
+                },
+              );
             }
-
           ),
         ),
       ],
     ),
   );
 }
-
   List<ChatMessage> _sendMessage(bool isUser, String text, String userId) { //id generation needs to be made secure
     final ChatMessage message = ChatMessage(id: Random().nextInt(1000000000), userId: userId, aiID: widget.aiPartner.id, text: text, isFromUser: isUser, timestamp: DateTime.now());
     //TODO: send message to AI and catch response - trigger waiting UI?
