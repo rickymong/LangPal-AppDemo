@@ -147,6 +147,7 @@ Widget build(BuildContext context) {
   List<ChatMessage> _sendMessage(bool isUser, String text, String userId) { //id generation needs to be made secure
     final ChatMessage message = ChatMessage(id: Random().nextInt(1000000000), userId: userId, aiID: widget.aiPartner.id, text: text, isFromUser: isUser, timestamp: DateTime.now());
     //TODO: send message to AI and catch response - trigger waiting UI?
+    
     String responseText =  "My name is ${widget.aiPartner.name} -- ${message.text}"; //default dummy response
     MessageService().sendMessage(message); //sends user's message to the UI
     

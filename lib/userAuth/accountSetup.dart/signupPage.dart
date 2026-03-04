@@ -36,7 +36,7 @@ class _SignUpPageState extends State<SignUpPage> {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth =  MediaQuery.of(context).size.width;
     final userNotifier = context.read<UserNotifier>();
-
+    final language = userNotifier.selectedLanguage;
     return Scaffold(
       backgroundColor: Color.fromARGB(255, 255, 255, 255), //add logic for darkmode
       body: SafeArea(
@@ -180,10 +180,10 @@ class _SignUpPageState extends State<SignUpPage> {
                   SizedBox(height: screenHeight * 0.02),
                   // Sign Up Button
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         // Handle sign up logic here
-                        bool success = userNotifier.signUp(email: _emailController.text, password: _passwordController.text, name: _usernameController.text) as bool;
+                        bool success = await userNotifier.signUp(email: _emailController.text, password: _passwordController.text, name: _usernameController.text, language: language);
                         if(success){
                           print("SIGN UP SUCCESS");
                           ScaffoldMessenger.of(context).showSnackBar(

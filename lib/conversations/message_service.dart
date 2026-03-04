@@ -14,7 +14,7 @@ class MessageService {
   
   Stream<ChatMessage> get messageStream => _messageController.stream;
   List<List<String>> _messages = [];
-  void sendMessage(ChatMessage message) { //method is bugged - last tested by Adam (predevlopment) did not properly save messages to state - how they are loaded should also be checked
+  void sendMessage(ChatMessage message) {
           if(message.isFromUser == true){
         _messages.add(["user", message.text]);
       }else{

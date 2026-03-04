@@ -28,6 +28,9 @@ class UserNotifier extends ChangeNotifier{
   final int _gamesRequiredForChallenge = 3;
   final int _dailyChallengeBonus = 50;
 
+  //profile config
+  String selectedLanguage = "";
+
   int get dayStreak => _dayStreak;
   int get totalXP => _totalXP;
   int get currentDailyXP => _currentDailyXP;
@@ -36,7 +39,6 @@ class UserNotifier extends ChangeNotifier{
   bool get dailyChallengeComplete => _dailyChallengeComplete;
   int get gamesRequiredForChallenge => _gamesRequiredForChallenge;
   int get dailyChallengeBonus => _dailyChallengeBonus;
-
 
   // rest daily challange track (should be decided based on new day and DB data?)
   void resetDailyChallenge() {
@@ -221,6 +223,7 @@ Future<void> _checkInitialState() async {
     required String email,
     required String password,
     required String name,
+    required String language,
   }) async {
     print("BUBBLES : BEOFRE SIGNUP CALL");
     try {
@@ -232,6 +235,7 @@ Future<void> _checkInitialState() async {
       print(response);
       print("BUBBLES --- signed up0");
       await loadUserData();
+      addLanguage(language);
       return true;
     } catch (e) {
       _error = e.toString();
@@ -319,22 +323,23 @@ Future<void> _checkInitialState() async {
     notifyListeners();
   }
 
-  void addMessage(AiPartner partner, ChatMessage message) { //adds a message to the users recorded conversation with AI partner
+  void addMessage(AiPartner partner, ChatMessage message) async { //adds a message to the users recorded conversation with AI partner
     if (_user == null) return;
 
     _user!.conversations ??= {};
     _user!.conversations!.putIfAbsent(partner, () => []);
     _user!.conversations![partner]!.add(message);
-
+    await SupabaseService.sendMessage(aiPartnerId: partner.id, text: message.text, isFromUser: message.isFromUser);
     notifyListeners();
 }
-  void addLanguage(String lang){ //Add a language to learn/user knows to their profile
+  void addLanguage(String lang) async { //Add a language to learn/user knows to their profile
     if(_user != null && !_user!.languages.contains(lang)){
       _user!.languages.add(lang);
     }
     //update user profile in remote database
+    await SupabaseService.updateUserProfile(currentLanguage: lang);
   }
-    Future<void> removeLanguage(String lang) async {
+  Future<void> removeLanguage(String lang) async {
     if (_user != null && _user!.languages.contains(lang)) {
       _user!.languages.remove(lang);
 
@@ -343,7 +348,7 @@ Future<void> _checkInitialState() async {
       }
 
       notifyListeners();
-    }
+    } 
   }
 
   /// Fetch all available AI partners (for adding new ones)
