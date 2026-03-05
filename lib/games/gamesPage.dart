@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/games/dailyChallengeTracker.dart';
+import 'package:langpal_prototype/games/sentenceBuilder.dart';
 import 'package:langpal_prototype/games/vocabMatcher.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
@@ -31,6 +32,7 @@ class _GamesPageState extends State<GamesPage> {
       difficulty: 'Medium',
       icon: Icons.view_module,
       summary: 'Build sentences from words',
+      gamePage: SentenceBuilder(xp: 30)
     ),
     Game(
       name: 'Speed Vocab',

@@ -1,26 +1,30 @@
+import 'dart:async';
+
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../types/user.dart' as app_user;
 import '../types/aiPartner.dart';
 import '../types/chatMessage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Supabase configuration and service layer for LangPal
 class SupabaseService {
   static SupabaseClient get client => Supabase.instance.client;
 
   /// Initialize Supabase - call this in main() before runApp()
-  static Future<void> initialize() async {
+   static Future<void> initialize() async {
+    final supabaseUrl = dotenv.env['SUPABASE_URL'];
+    final supabaseKey = dotenv.env['SUPABASE_PUB_KEY'];
+
+    if (supabaseUrl == null || supabaseKey == null) {
+      throw Exception('Supabase environment variables not found');
+    }
+
     await Supabase.initialize(
-      url: const String.fromEnvironment(
-        'https://txnuqxgkegnrekwmmvgx.supabase.co/',
-        defaultValue: 'https://txnuqxgkegnrekwmmvgx.supabase.co/',
-      ),
-      anonKey: const String.fromEnvironment(
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bnVxeGdrZWducmVrd21tdmd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNzE1MzcsImV4cCI6MjA4MjY0NzUzN30.1JUYiqCoi7EkZo2EJWY2EbfzWLswbq8q3Tf68if8ydk',
-        defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bnVxeGdrZWducmVrd21tdmd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNzE1MzcsImV4cCI6MjA4MjY0NzUzN30.1JUYiqCoi7EkZo2EJWY2EbfzWLswbq8q3Tf68if8ydk',
-      ),
+      url: supabaseUrl,
+      anonKey: supabaseKey,
     );
   }
-
   /// Get the currently logged in user's ID
   static String? get currentUserId => client.auth.currentUser?.id;
 
@@ -49,10 +53,16 @@ class SupabaseService {
     required String email,
     required String password,
   }) async {
-    return await client.auth.signInWithPassword(
+    print("in supabase service sign in");
+    final response = client.auth.signInWithPassword(
       email: email,
       password: password,
     );
+    if(response == null){
+      print("NULL SIGNINWITHPASSWORD RESPONSE");
+      print(response.toString());
+    }
+    return response;
   }
 
   /// Sign out
@@ -60,15 +70,51 @@ class SupabaseService {
     await client.auth.signOut();
   }
 
+  //SSO Methods
+  static Future<AuthResponse> googleSignIn() async {
+
+  /// Web Client ID that you registered with Google Cloud.
+  const webClientId = '435981250230-imcjnk5arlhb9bh4g74l99988t1c7e2a.apps.googleusercontent.com';
+
+  /// iOS Client ID that you registered with Google Cloud.
+  const iosClientId = '435981250230-1aisj7gkplg30mdhqi86gg53gqr91e1h.apps.googleusercontent.com';
+
+
+
+  final GoogleSignIn signIn = GoogleSignIn.instance;
+  unawaited(
+    signIn.initialize(clientId: iosClientId, serverClientId: webClientId));
+
+  // Perform the sign in
+  final googleAccount = await signIn.authenticate();
+final googleAuthorization = await googleAccount.authorizationClient.authorizationForScopes([
+    'email',
+    'profile',
+  ]);  final googleAuthentication = googleAccount.authentication;
+  final idToken = googleAuthentication.idToken;
+  final accessToken = googleAuthorization?.accessToken;
+
+  if (idToken == null) {
+    throw 'No ID Token found.';
+  }
+
+  return await client.auth.signInWithIdToken(
+    provider: OAuthProvider.google,
+    idToken: idToken,
+    accessToken: accessToken,
+  );
+}
+
   // ============================================
   // USER PROFILE METHODS
   // ============================================
 
   /// Fetch user profile from database
   static Future<app_user.User?> fetchUserProfile() async {
+    print("in fetchUserProfile");
     final userId = currentUserId;
     if (userId == null) return null;
-
+    
     final response = await client
         .from('user_profiles')
         .select()
@@ -84,7 +130,7 @@ class SupabaseService {
     final languages = (languagesResponse as List)
         .map((e) => e['language'] as String)
         .toList();
-
+    print("fetcherUserProfile: user name: ${response["name"]}");
     return app_user.User(
       id: response['id'],
       name: response['name'],

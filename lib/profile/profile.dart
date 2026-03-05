@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/landingPage/landingPage.dart';
 import 'package:langpal_prototype/profile/languageSelector.dart';
 import 'package:langpal_prototype/types/aiPartner.dart';
 import 'package:provider/provider.dart';
@@ -40,14 +41,15 @@ class _ProfileState extends State<Profile> {
     final height = size.height;
 
     //load data from user state
-    User user = context.watch<UserNotifier>().user!;
+    final userNotifier = context.read<UserNotifier>();
+
     String languages = "";
-    for(int i = 0; i < user.languages.length; i++){ //Turn user's languages into a visual list -- How they are displayed should probably be changed
-      if(i < user.languages.length - 1){
-        languages += "${user.languages[i]} | ";
+    for(int i = 0; i < userNotifier.user!.languages.length; i++){ //Turn user's languages into a visual list -- How they are displayed should probably be changed
+      if(i < userNotifier.user!.languages.length - 1){
+        languages += "${userNotifier.user!.languages[i]} | ";
       }
       else{
-        languages = languages + user.languages[i]; //makes it so last item doesn't have '|'"
+        languages = languages + userNotifier.user!.languages[i]; //makes it so last item doesn't have '|'
       }
     }
 
@@ -84,10 +86,10 @@ class _ProfileState extends State<Profile> {
 
               ),
               SizedBox(height: height * 0.03),
-
+             
               // Make name editable?
               Text(
-                user.name,
+                userNotifier.user!.name,
                 style: Theme.of(context).textTheme.headlineLarge,
               ),
               SizedBox(height: height * 0.02),
@@ -97,7 +99,7 @@ class _ProfileState extends State<Profile> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text("Joined:"),
-                  Text(DateFormat('MM/dd/yyyy').format(user.createdAt)),
+                  Text(DateFormat('MM/dd/yyyy').format(userNotifier.user!.createdAt)),
                 ],
               ),
               SizedBox(height: height * 0.015),
@@ -142,7 +144,10 @@ class _ProfileState extends State<Profile> {
                             child: const Text('Cancel'),
                           ),
                           TextButton(
-                            onPressed: () => Navigator.of(context).pop(true),
+                            onPressed: () => {
+                              userNotifier.signOut(),
+                              Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => LandingPage()), (route) => false ),
+                              },
                             child: const Text('Sign Out', style: TextStyle(color: Colors.red)),
                           ),
                         ],

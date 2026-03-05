@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/userAuth/accountSetup.dart/goalSelection.dart';
+import 'package:langpal_prototype/userNotifier.dart';
+import 'package:provider/provider.dart';
 
 class FirstLangSelectPage extends StatefulWidget {
   const FirstLangSelectPage({super.key});
@@ -12,7 +14,7 @@ class _FirstLangSelectPageState extends State<FirstLangSelectPage> {
   final _formKey = GlobalKey<FormState>();
   int? _selectedIndex;
 
-  List languageList = ["German", "Spanish", "Japanese"];
+  List<String> languageList = ["German", "Spanish", "Japanese"];
   List flagImagePaths = ["assets/flags/german_flag.jpg", "assets/flags/spain_flag.jpg", "assets/flags/japan_flag.png"];
   //  ^ change to be country abbreviations using https://pub.dev/packages/country_flags
   
@@ -64,15 +66,20 @@ class _FirstLangSelectPageState extends State<FirstLangSelectPage> {
                   ),
                   itemCount: languageList.length,
                   itemBuilder: (context, index) {
-                    return LangSelectTab(
-                      language: languageList[index],
-                      flagPath: flagImagePaths[index],
-                      isSelected: _selectedIndex == index,
-                      onTap: () {
-                        setState(() {
-                          _selectedIndex = index;
-                        });
-                      },
+                    return Consumer<UserNotifier>(
+                      builder: (context, userNotifier, child){
+                        return LangSelectTab(
+                        language: languageList[index],
+                        flagPath: flagImagePaths[index],
+                        isSelected: _selectedIndex == index,
+                        onTap: () {
+                          setState(() {
+                            _selectedIndex = index;
+                            userNotifier.selectedLanguage = languageList[index];
+                          });
+                        },
+                       );
+                      }                      
                     );
                   },
                 ),

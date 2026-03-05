@@ -49,6 +49,7 @@ class _AuthPageState extends State<AuthPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         name: _nameController.text.trim(),
+        language: "OUTDATED FILE"
       );
     }
 

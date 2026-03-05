@@ -1,6 +1,8 @@
 """FastAPI entry point for LangPal MVP."""
 from typing import List
 
+from typing import List
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -8,6 +10,8 @@ from pydantic import BaseModel
 from listening import run_listening_practice
 from speaking import run_speaking_practice
 from writing import run_writing_practice
+from fill_blanks import score_fill_blank_game, start_fill_blank_game
+from matching import score_matching_game, start_matching_game
 from fill_blanks import score_fill_blank_game, start_fill_blank_game
 from matching import score_matching_game, start_matching_game
 
@@ -27,6 +31,46 @@ class SpeakingRequest(BaseModel):
 class ListeningRequest(BaseModel):
     """Payload for listening practice."""
     user_id: str
+
+
+class FillBlankStartRequest(BaseModel):
+    """Payload to start the fill-in-the-blank game."""
+    user_id: str
+    num_questions: int = 3
+
+
+class FillBlankSelection(BaseModel):
+    """Learner selection for one blank."""
+    sentence: str
+    selected_option: str
+    answer: str
+    explanation: str | None = None
+
+
+class FillBlankScoreRequest(BaseModel):
+    """Payload to score the fill-in-the-blank game."""
+    user_id: str
+    questions: List[FillBlankSelection]
+
+
+class MatchingStartRequest(BaseModel):
+    """Payload to start the matching game."""
+    user_id: str
+    num_pairs: int = 4
+
+
+class MatchingPairSelection(BaseModel):
+    """Learner selection for a vocab card."""
+    target_word: str
+    english_word: str
+    selected_match: str
+    hint: str | None = None
+
+
+class MatchingScoreRequest(BaseModel):
+    """Payload to score the matching game."""
+    user_id: str
+    pairs: List[MatchingPairSelection]
 
 
 class FillBlankStartRequest(BaseModel):

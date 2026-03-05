@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/types/aiPartner.dart';
@@ -13,72 +12,6 @@ import 'message_service.dart';
 //**READ ME **
 //this file contains multiple classes that comprise the chat logic -- feel free to separate into multiple files if this seems to big or confusing due to multiple classes
 
-class ChatContainer extends StatefulWidget { //Container that holds the messages
-  List<ChatMessage> messages;
-   ChatContainer({
-    super.key, 
-    required this.messages,
-  });
-
-@override
-  State<ChatContainer> createState() => _ChatContainer();
-}
-class _ChatContainer extends State<ChatContainer>{
-  final ScrollController? scrollController = ScrollController();
-  //late StreamSubscription<ChatMessage> _subscription;
- 
-  @override
-void initState() {
-  super.initState();
-
-}
-
-@override
-void dispose(){
- // _subscription.cancel();
-  scrollController?.dispose();
-  super.dispose();
-}
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        minHeight: 50,
-        maxHeight: 300,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black,
-            blurRadius: 10,
-            spreadRadius: 0.5,
-          ),
-        ],
-      ),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: ListView.builder(
-          controller: scrollController,
-          padding: const EdgeInsets.all(12),
-          itemCount: widget.messages.length,
-          physics: const BouncingScrollPhysics(),
-          shrinkWrap: true,
-          itemBuilder: (context, index) {
-            final message = widget.messages[index];
-            return MessageBubble(
-              message: message.text,
-              isUser: message.isFromUser,
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
 
 class MessageBubble extends StatelessWidget { //message UI
   final String message;
@@ -148,74 +81,73 @@ class _ChatInputState extends State<ChatInput> {
     super.initState();
   
   }
-
-  Widget build(BuildContext context) {
-    //String userId = context.read<UserNotifier>().user!.id;
-    User user = context.watch<UserNotifier>().user!; //gets user info - triggers refresh if state updates
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black,
-            offset: const Offset(0, -1),
-            blurRadius: 5,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _textController,
-              decoration: InputDecoration(
-                hintText: 'Type a message...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24.0),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Colors.grey[100],
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 10.0,
-                ),
+Widget build(BuildContext context) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  User user = context.watch<UserNotifier>().user!;
+  
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Fixed values
+    decoration: BoxDecoration(
+      color: Colors.white,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          offset: const Offset(0, -1),
+          blurRadius: 5,
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _textController,
+            decoration: InputDecoration(
+              hintText: 'Type a message...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(24), // Fixed value
+                borderSide: BorderSide.none,
               ),
-              textCapitalization: TextCapitalization.sentences,
+              filled: true,
+              fillColor: Colors.grey[100],
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ), // Fixed values
             ),
+            textCapitalization: TextCapitalization.sentences,
           ),
-          const SizedBox(width: 8.0),
-          CircleAvatar(//send button
-            backgroundColor: Color.fromARGB(255, 7, 172, 190),
-            child: Consumer<UserNotifier>(
-              builder: (context, userNotifier, child){
+        ),
+        const SizedBox(width: 8), // Fixed value
+        CircleAvatar(
+          backgroundColor: Color.fromARGB(255, 7, 172, 190),
+          radius: 24, // Fixed value
+          child: Consumer<UserNotifier>(
+            builder: (context, userNotifier, child) {
               return IconButton(
-                icon: const Icon(Icons.send, color: Colors.white),
+                icon: const Icon(Icons.send, color: Colors.white, size: 20), // Fixed size
                 onPressed: () {
-                  // Send message logic
                   if (_textController.text.trim().isNotEmpty) {
                     setState(() {
-                      //send new message object to list of messages in ChatContainer;
                       List<ChatMessage> messages = _sendMessage(true, _textController.text, user.id);
                       userNotifier.addMessage(widget.aiPartner, messages[0]);
                       userNotifier.addMessage(widget.aiPartner, messages[1]);
-                     _textController.clear();
+                      _textController.clear();
                     });
                   }
                 },
               );
-              }
-
-            ),
+            }
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
   List<ChatMessage> _sendMessage(bool isUser, String text, String userId) { //id generation needs to be made secure
     final ChatMessage message = ChatMessage(id: Random().nextInt(1000000000), userId: userId, aiID: widget.aiPartner.id, text: text, isFromUser: isUser, timestamp: DateTime.now());
     //TODO: send message to AI and catch response - trigger waiting UI?
+    
     String responseText =  "My name is ${widget.aiPartner.name} -- ${message.text}"; //default dummy response
     MessageService().sendMessage(message); //sends user's message to the UI
     

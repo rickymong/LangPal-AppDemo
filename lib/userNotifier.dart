@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/types/chatMessage.dart';
 import 'package:langpal_prototype/services/supabase_service.dart';
-import 'types/user.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'types/user.dart' as User;
 import 'types/aiPartner.dart';
 
 //Notifier for managing state of user
@@ -9,9 +12,10 @@ import 'types/aiPartner.dart';
 class UserNotifier extends ChangeNotifier{
 
    
-  User? _user;
-  
-  User? get user => _user;
+  User.User? _user;
+  StreamSubscription<AuthState>? _authSubscription;
+
+  User.User? get user => _user;
 
   //Profile stats (queried frm DB)
   int _dayStreak = 7;
@@ -24,6 +28,9 @@ class UserNotifier extends ChangeNotifier{
   final int _gamesRequiredForChallenge = 3;
   final int _dailyChallengeBonus = 50;
 
+  //profile config
+  String selectedLanguage = "";
+
   int get dayStreak => _dayStreak;
   int get totalXP => _totalXP;
   int get currentDailyXP => _currentDailyXP;
@@ -32,7 +39,6 @@ class UserNotifier extends ChangeNotifier{
   bool get dailyChallengeComplete => _dailyChallengeComplete;
   int get gamesRequiredForChallenge => _gamesRequiredForChallenge;
   int get dailyChallengeBonus => _dailyChallengeBonus;
-
 
   // rest daily challange track (should be decided based on new day and DB data?)
   void resetDailyChallenge() {
@@ -53,7 +59,9 @@ class UserNotifier extends ChangeNotifier{
   bool get isLoggedIn => SupabaseService.isLoggedIn;
 
   UserNotifier() {
-    _init();
+    _initAuthListener();
+    _checkInitialState();
+  //_init();
   }
 
 
@@ -63,8 +71,52 @@ Future<void> _init() async {
     } else {
       // Not logged in - show auth page
       _isLoading = false;
-      notifyListeners();
+      
     }
+    notifyListeners();
+  }
+  
+@override
+void dispose() {
+  _authSubscription?.cancel();
+  super.dispose();
+}
+
+void _initAuthListener() {
+    _authSubscription = SupabaseService.client.auth.onAuthStateChange.listen(
+      (AuthState data) {
+        final AuthChangeEvent event = data.event;
+        
+        if (event == AuthChangeEvent.signedIn) {
+          // User signed in (via email/password OR Google SSO)
+          loadUserData();
+        } else if (event == AuthChangeEvent.signedOut) {
+          // User signed out
+          _clearUserData();
+        } else if (event == AuthChangeEvent.tokenRefreshed) {
+          // Optional: handle token refresh if needed
+          print('Token refreshed');
+        }
+      },
+    );
+  }
+/// Check initial auth state on app start
+Future<void> _checkInitialState() async {
+  if (SupabaseService.isLoggedIn) {
+    await loadUserData();
+  } else {
+    // Not logged in - stop loading
+    _isLoading = false;
+    notifyListeners();
+  }
+}
+
+ void _clearUserData() {
+    _user = null;
+    _aiPartners = [];
+    _conversations = {};
+    _error = null;
+    notifyListeners();
   }
 
   /// Continue without account (demo/guest mode)
@@ -76,20 +128,24 @@ Future<void> _init() async {
   Future<void> loadUserData() async {
     _isLoading = true;
     _error = null;
-    notifyListeners();
+   // notifyListeners();
+    print("IN LOAD USER DATA");
 
     try {
       // Fetch user profile
       _user = await SupabaseService.fetchUserProfile();
-
+      if(_user != null){
+        print("user id: ${user!.id}");
+      }
       // Fetch user's AI partners
       _aiPartners = await SupabaseService.fetchUserAiPartners();
 
+
       // Fetch conversations for each AI partner
-      _conversations = {};
+      //_conversations = {};
       for (final partner in _aiPartners) {
         final messages = await SupabaseService.fetchMessages(partner.id);
-        _conversations[partner] = messages;
+        conversations[partner] = messages;
       }
 
       _isLoading = false;
@@ -149,7 +205,7 @@ Future<void> _init() async {
     _aiPartners = [ai];
     _conversations = {ai: convo};
     
-    _user = User(
+    _user = User.User(
       id: "user_001",
       name: "Adam Hirshson",
       email: "Adam@Hirshson.com",
@@ -167,6 +223,7 @@ Future<void> _init() async {
     required String email,
     required String password,
     required String name,
+    required String language,
   }) async {
     print("BUBBLES : BEOFRE SIGNUP CALL");
     try {
@@ -178,6 +235,7 @@ Future<void> _init() async {
       print(response);
       print("BUBBLES --- signed up0");
       await loadUserData();
+      addLanguage(language);
       return true;
     } catch (e) {
       _error = e.toString();
@@ -191,8 +249,12 @@ Future<void> _init() async {
     required String email,
     required String password,
   }) async {
+    print("In notifier signin");
     try {
-      await SupabaseService.signIn(email: email, password: password);
+      final response = await SupabaseService.signIn(email: email, password: password);
+      if(response != null){
+        print("response in sign in not null");
+      }
       await loadUserData();
       return true;
     } catch (e) {
@@ -261,22 +323,23 @@ Future<void> _init() async {
     notifyListeners();
   }
 
-  void addMessage(AiPartner partner, ChatMessage message) { //adds a message to the users recorded conversation with AI partner
+  void addMessage(AiPartner partner, ChatMessage message) async { //adds a message to the users recorded conversation with AI partner
     if (_user == null) return;
 
     _user!.conversations ??= {};
     _user!.conversations!.putIfAbsent(partner, () => []);
     _user!.conversations![partner]!.add(message);
-
+    await SupabaseService.sendMessage(aiPartnerId: partner.id, text: message.text, isFromUser: message.isFromUser);
     notifyListeners();
 }
-  void addLanguage(String lang){ //Add a language to learn/user knows to their profile
+  void addLanguage(String lang) async { //Add a language to learn/user knows to their profile
     if(_user != null && !_user!.languages.contains(lang)){
       _user!.languages.add(lang);
     }
     //update user profile in remote database
+    await SupabaseService.updateUserProfile(currentLanguage: lang);
   }
-    Future<void> removeLanguage(String lang) async {
+  Future<void> removeLanguage(String lang) async {
     if (_user != null && _user!.languages.contains(lang)) {
       _user!.languages.remove(lang);
 
@@ -285,7 +348,7 @@ Future<void> _init() async {
       }
 
       notifyListeners();
-    }
+    } 
   }
 
   /// Fetch all available AI partners (for adding new ones)

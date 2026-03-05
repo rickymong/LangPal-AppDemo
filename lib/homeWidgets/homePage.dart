@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/profile/profile.dart';
+import 'package:langpal_prototype/types/aiPartner.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
+import '../conversations/chatPage.dart';
 import '../games/gamesPage.dart';
 import '../types/lesson.dart';
 import 'progressBar.dart';
@@ -61,43 +64,47 @@ class _HomeScreenState extends State<HomeScreen> {
       icon: Icons.luggage,
     ),
   ];
+@override
+Widget build(BuildContext context) {
+  final screenHeight = MediaQuery.of(context).size.height;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _isDarkMode ? const Color(0xFF1F1F1F) : Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header with icon, text, and dark mode toggle
-                _buildHeader(),
-                const SizedBox(height: 32),
+  return Consumer<UserNotifier>(
+    builder: (context, userNotifier, child) {
+      // Show loading if data is still loading
+      if (userNotifier.isLoading) {
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
 
-                // Stats row with 3 boxes
-                _buildStatsRow(),
-                const SizedBox(height: 32),
-
-                // Today's Progress section
-                DailyProgress(isDarkMode: _isDarkMode),
-                const SizedBox(height: 32),
-
-                // Quick Actions
-                _buildQuickActions(),
-                const SizedBox(height: 32),
-
-                // Your Lessons section
-                _buildLessonsSection(),
-              ],
+      // Show your actual home screen content
+      return Scaffold(
+        backgroundColor: _isDarkMode ? const Color(0xFF1F1F1F) : Colors.white,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  SizedBox(height: screenHeight * 0.04),
+                  _buildStatsRow(),
+                  SizedBox(height: screenHeight * 0.04),
+                  DailyProgress(isDarkMode: _isDarkMode),
+                  SizedBox(height: screenHeight * 0.04),
+                  _buildQuickActions(),
+                  SizedBox(height: screenHeight * 0.04),
+                  _buildLessonsSection(),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    },
+  );
+}
 
   Widget _buildHeader() {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -105,27 +112,32 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       children: [
         // Parrot icon (using emoji in a container for visual)
-        Container(
-          width: 70,
-          height: 70,
-          // decoration: BoxDecoration(
-          //   gradient: const LinearGradient(
-          //     colors: [Color(0xFF58CC02), Color(0xFF89E219)],
-          //     begin: Alignment.topLeft,
-          //     end: Alignment.bottomRight,
-          //   ),
-          //   borderRadius: BorderRadius.circular(12),
-          // ),
-          // child: const Center(
-          //   child: Text(
-          //     '🦜',
-          //     style: TextStyle(fontSize: 28),
-          //   ),
-          // ),
-          child: Image.asset(
-            'assets/langpal_logos/LangPal-Primary-mascot.png',
-            //height: screenHeight * 0.25, //image size
-            fit: BoxFit.contain, //keeps the whole logo visable
+        GestureDetector(
+          onTap: () => {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => Profile()))
+          },
+          child: Container(
+            width: 70,
+            height: 70,
+            // decoration: BoxDecoration(
+            //   gradient: const LinearGradient(
+            //     colors: [Color(0xFF58CC02), Color(0xFF89E219)],
+            //     begin: Alignment.topLeft,
+            //     end: Alignment.bottomRight,
+            //   ),
+            //   borderRadius: BorderRadius.circular(12),
+            // ),
+            // child: const Center(
+            //   child: Text(
+            //     '🦜',
+            //     style: TextStyle(fontSize: 28),
+            //   ),
+            // ),
+            child: Image.asset(
+              'assets/langpal_logos/LangPal-Primary-mascot.png',
+              //height: screenHeight * 0.25, //image size
+              fit: BoxFit.contain, //keeps the whole logo visable
+            ),
           ),
         ),
         const SizedBox(width: 12),
@@ -167,6 +179,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStatsRow() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Row(
       children: [
         Expanded(
@@ -176,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: screenWidth * 0.02),
         Expanded(
           child: Consumer<UserNotifier>(
             builder: (context, appState, child) {
@@ -184,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: screenWidth * 0.02),
         Expanded(
           child: Consumer<UserNotifier>(
             builder: (context, appState, child) {
@@ -197,6 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildQuickActions() {
+    AiPartner dummyPartner = AiPartner(name: "Johnson", id: "999", language: "Spanish", flag_path: "assets/flags/spain_flag.jpr");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -219,7 +235,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 backgroundColor: const Color(0xFFE0F4FF),
                 iconColor: const Color(0xFF1CB0F6),
                 onTap: () {
-                  // Handle AI Tutor tap
+                  Navigator.push(context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatPage(aiPartner: dummyPartner),
+                  ));
                 },
               ),
             ),
@@ -505,8 +524,8 @@ class DailyProgress extends StatelessWidget {
             ProgressBar(
               progress: progressFraction,
               height: 12,
-              backgroundColor:
-                  _isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFE5E5E5),
+              backgroundColor: const Color.fromARGB(255, 197, 194, 194),
+                 // _isDarkMode ? const Color.fromARGB(255, 117, 117, 117) : const Color(0xFFE5E5E5),
               progressColor: const Color(0xFF58CC02),
             ),
           ],

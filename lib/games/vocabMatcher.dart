@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/games/gameTimer.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -28,6 +31,9 @@ class _VocabMatchState extends State<VocabMatch> {
   final AudioPlayer correctPlayer = AudioPlayer();
   final AudioPlayer wrongPlayer = AudioPlayer();
 
+  bool timeUp = false;
+  double seconds = 5;
+  bool gameComplete = false;
   @override
   void initState() {
     super.initState();
@@ -48,6 +54,22 @@ class _VocabMatchState extends State<VocabMatch> {
     _preloadSounds();
   }
 
+    @override
+  void didUpdateWidget(VocabMatch oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _checkTimesUp(); // ✅ Check if time is up
+    _checkIfWin(); // ✅ Check if all matches found
+  }
+
+
+  @override
+  void dispose() {
+    correctPlayer.dispose();
+    wrongPlayer.dispose();
+    super.dispose();
+
+  }
+
   int get _matchedPairs => matchedWords.length ~/ 2;
   int get _totalPairs => vocabPairsMap.length;
   
@@ -66,6 +88,7 @@ class _VocabMatchState extends State<VocabMatch> {
   }
   
   void _handleCardTap(String word) {
+    if (gameComplete) return;
     if (matchedWords.contains(word) || flashingWords.contains(word)) return;
     
     setState(() {
@@ -81,6 +104,7 @@ class _VocabMatchState extends State<VocabMatch> {
   }
 
   void _checkMatch() {
+    if(gameComplete) return;
     final first = firstSelectedWord!;
     final second = secondSelectedWord!;
     
@@ -96,6 +120,7 @@ class _VocabMatchState extends State<VocabMatch> {
         firstSelectedWord = null;
         secondSelectedWord = null;
       });
+      _checkIfWin();
     } else {
       wrongPlayer.seek(Duration.zero);
       wrongPlayer.resume();
@@ -119,6 +144,42 @@ class _VocabMatchState extends State<VocabMatch> {
     print("vocabList: ${vocabList.length}");
   }
 
+   void _checkIfWin() {
+    if (gameComplete) return;
+    
+    if (matchedWords.length == vocabList.length) {
+      _completeGame(won: true);
+    }
+  }
+
+  void _checkTimesUp() {
+    if (gameComplete) return;
+    
+    if (timeUp) {
+      _completeGame(won: false);
+    }
+  }
+
+  void _completeGame({required bool won}) {
+    if (gameComplete) return;
+    
+    gameComplete = true;
+    
+    final userNotifier = Provider.of<UserNotifier>(context, listen: false);
+    
+    if (won) {
+      userNotifier.completeGame(widget.xp);
+    }
+    
+    _showCompletionPopup(context);
+    
+    Future.delayed(const Duration(seconds: 2), () {
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+    });
+  }
+
   Color _getBorderColor(String word) {
     if (flashingWords.contains(word)) return Colors.red; //if pair is wrong
     if (matchedWords.contains(word)) return Colors.green; //highlight proper matches
@@ -134,18 +195,18 @@ Widget build(BuildContext context) {
   final screenHeight = MediaQuery.of(context).size.height;
   final userNotifier = context.read<UserNotifier>(); // Get it here in build
 
- WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (matchedWords.length == vocabList.length) {
-      _showCompletionPopup(context);
-      userNotifier.completeGame(widget.xp);
-      Future.delayed(const Duration(seconds: 2), () {
-        if (context.mounted) {
-          Navigator.pop(context);
-        }
-      });
-        }
-    });
-
+//  WidgetsBinding.instance.addPostFrameCallback((_) {
+//     if (matchedWords.length == vocabList.length) {
+//       _showCompletionPopup(context);
+//       userNotifier.completeGame(widget.xp);
+//       Future.delayed(const Duration(seconds: 2), () {
+//         if (context.mounted) {
+//           Navigator.pop(context);
+//         }
+//       });
+//         }
+//     });
+  
   return Scaffold(
     backgroundColor: Colors.white,
     appBar: AppBar(
@@ -173,13 +234,24 @@ Widget build(BuildContext context) {
             vertical: screenHeight * 0.02,
             horizontal: screenWidth * 0.05,
           ),
-          child: Text(
-            '$_matchedPairs/$_totalPairs completed',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: _progressColor,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '$_matchedPairs/$_totalPairs completed',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: _progressColor,
+                ),
+              ),
+              SizedBox(width: screenWidth * 0.10),
+              GameTimer(seconds: seconds, onFinish: () {
+                if(!mounted) return;
+
+                if(!gameComplete) showTimesUpModal(context: context, score: _matchedPairs, total: _totalPairs);
+                }) //onFinish: () {_showTimesUpPopup(context, _matchedPairs, _totalPairs); }
+            ],
           ),
         ),
         
@@ -223,12 +295,63 @@ void _showCompletionPopup(BuildContext context) {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.02),
       ),
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 4),
     ),
   );
 }
 
+void showTimesUpModal({
+  required BuildContext context,
+  required int score,
+  required int total
+}) {
+  bool popped = false;
+
+  void exitFlow() {
+    if (popped) return;
+    popped = true;
+
+    Navigator.of(context).pop(); // close modal
+    Navigator.of(context).pop(); // pop game screen
+  }
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) {
+      // Auto-exit after 5 seconds
+      Future.delayed(const Duration(seconds: 5), exitFlow);
+
+      return AlertDialog(
+        title: const Text(
+          "Time’s Up!",
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          "Score: $score / $total",
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: exitFlow,
+            child: const Text("OK"),
+          ),
+        ],
+      );
+    },
+  );
 }
+
+
+
+}
+
+
 
 class VocabCard extends StatelessWidget {
   const VocabCard({
@@ -291,3 +414,4 @@ class VocabCard extends StatelessWidget {
     );
   }
 }
+

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/homeWidgets/homePage.dart';
 import 'package:langpal_prototype/userAuth/socialLogoButtons.dart';
+import 'package:provider/provider.dart';
+
+import '../../userNotifier.dart';
 
 
 
@@ -164,6 +167,7 @@ class _PasswordEntryPageState extends State<PasswordEntryPage> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+    final userNotifier = context.read<UserNotifier>();
 
     return Scaffold(
       backgroundColor: Color.fromARGB(255, 255, 255, 255),
@@ -252,21 +256,31 @@ class _PasswordEntryPageState extends State<PasswordEntryPage> {
                   ),
                   SizedBox(height: screenHeight * 0.02),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         // Handle sign in logic here
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Signed in successfully!'),
-                          ),
-                        );
-                        // Call signin with widget.email and _passwordController.text
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => HomeScreen()
-                          ),
-                        );
+                        bool success = await userNotifier.signIn(email: widget.email, password: _passwordController.text);
+                        if(success){
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Signed in successfully!'),
+                            ),
+                          );
+                          // Call signin with widget.email and _passwordController.text
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HomeScreen()
+                            ),
+                          );
+                        }//end if
+                        else{
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Signed in failed - try again'),
+                            ),
+                          );
+                        }
                       }                      
                     },
                     style: ElevatedButton.styleFrom(

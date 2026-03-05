@@ -21,6 +21,9 @@ dependencies:
   supabase_flutter: ^2.3.0
   html: ^0.15.6
   audioplayers: ^6.1.0
+  flutter_dotenv: ^5.1.0
+  google_sign_in: ^7.1.1
+  marquee: ^2.2.3
 
 
 dev_dependencies:
@@ -50,5 +53,6 @@ flutter:
     - assets/langpal_logos/
     - assets/social_logos/
     - assets/audio/games/
+    - .env
   #   - images/a_dot_ham.jpeg
 

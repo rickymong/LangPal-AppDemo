@@ -1,10 +1,24 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
-class SocialLogoButtons extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:langpal_prototype/homeWidgets/homePage.dart';
+import 'package:langpal_prototype/userNotifier.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/supabase_service.dart';
+
+
+class SocialLogoButtons extends StatefulWidget {
   const SocialLogoButtons({
     super.key,
   });
 
+  @override
+  State<SocialLogoButtons> createState() => _SocialLogoButtonsState();
+}
+
+class _SocialLogoButtonsState extends State<SocialLogoButtons> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -26,8 +40,23 @@ class SocialLogoButtons extends StatelessWidget {
           ),
         ),
         GestureDetector(
-          onTap: () {
-            print("Gmail");
+          onTap: () async {
+             try {
+                await SupabaseService.googleSignIn();
+                
+                if (mounted) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const HomeScreen()),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Google sign-in failed: $e')),
+                  );
+                  print(e);
+                }
+              }
           },
           child: Image.asset(
             'assets/social_logos/icons8-gmail-50-3.png',

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/landingPage/landingPage.dart';
 import 'package:langpal_prototype/userAuth/login/loginPage.dart';
 import 'package:langpal_prototype/userAuth/socialLogoButtons.dart';
+import 'package:langpal_prototype/userNotifier.dart';
+import 'package:provider/provider.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -32,7 +35,8 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth =  MediaQuery.of(context).size.width;
-    
+    final userNotifier = context.read<UserNotifier>();
+    final language = userNotifier.selectedLanguage;
     return Scaffold(
       backgroundColor: Color.fromARGB(255, 255, 255, 255), //add logic for darkmode
       body: SafeArea(
@@ -176,15 +180,31 @@ class _SignUpPageState extends State<SignUpPage> {
                   SizedBox(height: screenHeight * 0.02),
                   // Sign Up Button
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         // Handle sign up logic here
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        bool success = await userNotifier.signUp(email: _emailController.text, password: _passwordController.text, name: _usernameController.text, language: language);
+                        if(success){
+                          print("SIGN UP SUCCESS");
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Account created successfully!'),
+                            ),
+                          );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => LandingPage()),
+                    );
+                        }
+                        else{
+                          ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Account created successfully!'),
-                          ),
-                        );
+                            content: Text('Error Creating Account'),
+                            ),
+                          );
+                        }
                       }
+
                     },
                     style: ElevatedButton.styleFrom(
                       

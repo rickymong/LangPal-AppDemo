@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import "package:flutter_dotenv/flutter_dotenv.dart";
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:langpal_prototype/conversations/conversations.dart';
-import 'package:langpal_prototype/navigator.dart';
-import 'package:langpal_prototype/profile/profile.dart';
 import 'package:langpal_prototype/types/aiPartner.dart';
 import 'package:langpal_prototype/services/supabase_service.dart';
-import 'package:langpal_prototype/auth/auth_page.dart';
 import 'package:provider/provider.dart';
+import 'homeWidgets/homePage.dart';
 import 'types/user.dart';
 import "userNotifier.dart";
 import "landingPage/landingPage.dart";
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize Supabase
+  await dotenv.load(fileName: ".env");
   await SupabaseService.initialize();
   
   runApp(ChangeNotifierProvider(
@@ -35,7 +35,6 @@ class MyApp extends StatelessWidget {
       title: 'LangPal',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
@@ -73,11 +72,11 @@ class AuthWrapper extends StatelessWidget {
 
         // Show home page if user is loaded (logged in or demo mode)
         if (userNotifier.user != null) {
-          return const MyHomePage();
+          return const HomeScreen(); //does this set usernotifier state?
         }
 
         // Show auth page if no user
-        return const AuthPage();
+        else{ return const LandingPage();}
       },
     );
   }
