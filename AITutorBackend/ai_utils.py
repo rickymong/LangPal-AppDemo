@@ -231,3 +231,25 @@ def transcribe_speech(audio_base64: str, mime_type: str = "audio/mpeg") -> str:
     payload = response.json()
     return payload.get("text", "").strip()
 
+
+def generate_wordle_word(language: str) -> Dict[str, str]:
+    """Ask Gemini for a common 5-letter word in the target language."""
+    prompt = (
+        f"Provide a common, well-known 5-letter word in {language}.\n"
+        "Avoid obscure or archaic words.\n"
+        "Respond ONLY in valid JSON with this shape: \n"
+        "{\n  \"word\": \"apple\", \"hint\": \"a red or green fruit\"\n}\n"
+        "The hint should be in English."
+    )
+    raw = call_gemini(prompt)
+    data = _load_json_response(raw)
+
+    # Validation
+    word = data.get("word", "").strip().lower()
+    if not word or len(word) != 5:
+        # Fallback if AI fails parsing or provides wrong length
+        word = "apple" if language.lower() == "english" else "mundo"
+        data = {"word": word, "hint": "A common word to get you started."}
+
+    return data
+

@@ -10,6 +10,7 @@ from speaking import run_speaking_practice
 from writing import run_writing_practice
 from fill_blanks import score_fill_blank_game, start_fill_blank_game
 from matching import score_matching_game, start_matching_game
+from wordle import start_wordle_game
 
 
 class WritingRequest(BaseModel):
@@ -67,6 +68,11 @@ class MatchingScoreRequest(BaseModel):
     """Payload to score the matching game."""
     user_id: str
     pairs: List[MatchingPairSelection]
+
+
+class WordleStartRequest(BaseModel):
+    """Payload to start the Wordle game."""
+    user_id: str
 
 
 app = FastAPI(title="LangPal AI Tutor", version="0.1.0")
@@ -146,6 +152,15 @@ def score_matching(payload: MatchingScoreRequest) -> dict:
     try:
         pairs = [pair.model_dump() for pair in payload.pairs]
         return score_matching_game(payload.user_id, pairs)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/games/wordle/start")
+def start_wordle(payload: WordleStartRequest) -> dict:
+    """Generate a target word for the Wordle game."""
+    try:
+        return start_wordle_game(payload.user_id)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
