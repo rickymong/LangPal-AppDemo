@@ -1,9 +1,13 @@
-"""FastAPI entry point for LangPal MVP."""
+import os
 from typing import List
+from dotenv import load_dotenv
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+# Load environment variables from .env file
+load_dotenv()
 
 from listening import run_listening_practice
 from speaking import run_speaking_practice
