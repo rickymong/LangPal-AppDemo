@@ -138,6 +138,9 @@ final googleAuthorization = await googleAccount.authorizationClient.authorizatio
       createdAt: DateTime.parse(response['created_at']),
       languages: languages,
       profile_image_path: response['profile_image_url'],
+      streak: response["streak"],
+      streak_updated_at: response["streak_update"],
+      timezone: response["timezone"]
     );
   }
 
@@ -159,6 +162,22 @@ final googleAuthorization = await googleAccount.authorizationClient.authorizatio
       await client.from('user_profiles').update(updates).eq('id', userId);
     }
   }
+
+Future<Map<String, dynamic>> completeActivity(String userId) async {
+  final timezone = DateTime.now().timeZoneName;
+  return await client.rpc('complete_activity', params: {
+    'user_id': userId,
+    'user_timezone': timezone,
+  });
+}
+
+static Future<Map<String, dynamic>> checkStreakOnOpen(String userId) async {
+  final timezone = DateTime.now().timeZoneName;
+  return await client.rpc('check_streak_on_open', params: {
+    'user_id': userId,
+    'user_timezone': timezone,
+  });
+}
 
   // ============================================
   // LANGUAGE METHODS
@@ -186,6 +205,8 @@ final googleAuthorization = await googleAccount.authorizationClient.authorizatio
         .eq('user_id', userId)
         .eq('language', language);
   }
+
+
 
   // ============================================
   // AI PARTNER METHODS

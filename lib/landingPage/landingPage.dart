@@ -140,7 +140,7 @@ class _LandingPageState extends State<LandingPage>
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const FirstLangSelectPage(), //SignUpPage
+                          builder: (context) => const FirstLangSelectPage(), //Sign up route
                         ),
                       );
                     },

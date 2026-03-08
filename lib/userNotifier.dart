@@ -137,7 +137,11 @@ Future<void> _checkInitialState() async {
       if(_user != null){
         print("user id: ${user!.id}");
       }
+       final data = await SupabaseService.checkStreakOnOpen(_user!.id);
+            _user!.streak = data['streak'] as int;
+            _user!.streak_updated_at = DateTime.parse(data['streak_updated'] as String);
       // Fetch user's AI partners
+      _dayStreak = _user!.streak;
       _aiPartners = await SupabaseService.fetchUserAiPartners();
 
 
@@ -205,13 +209,13 @@ Future<void> _checkInitialState() async {
     _aiPartners = [ai];
     _conversations = {ai: convo};
     
-    _user = User.User(
-      id: "user_001",
-      name: "Adam Hirshson",
-      email: "Adam@Hirshson.com",
-      createdAt: DateTime.now(),
-      languages: ["English", "Chinese"],
-    );
+    // _user = User.User(
+    //   id: "user_001",
+    //   name: "Adam Hirshson",
+    //   email: "Adam@Hirshson.com",
+    //   createdAt: DateTime.now(),
+    //   languages: ["English", "Chinese"],
+    // );
 
     _isLoading = false;
     notifyListeners();

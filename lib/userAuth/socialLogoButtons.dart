@@ -28,17 +28,17 @@ class _SocialLogoButtonsState extends State<SocialLogoButtons> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        GestureDetector(
-          onTap: () {
-            print("apple");
-          },
-          child: Image.asset(
-            'assets/social_logos/icons8-apple-logo-50-2.png',
-            width: imageSize,
-            height: imageSize,
-            fit: BoxFit.cover,
-          ),
-        ),
+        // GestureDetector(
+        //   onTap: () {
+        //     print("apple");
+        //   },
+        //   child: Image.asset(
+        //     'assets/social_logos/icons8-apple-logo-50-2.png',
+        //     width: imageSize,
+        //     height: imageSize,
+        //     fit: BoxFit.cover,
+        //   ),
+        // ),
         GestureDetector(
           onTap: () async {
              try {
@@ -65,39 +65,39 @@ class _SocialLogoButtonsState extends State<SocialLogoButtons> {
             fit: BoxFit.cover,
           ),
         ),
-        GestureDetector(
-          onTap: () {
-            print("instagram");
-          },
-          child: Image.asset(
-            'assets/social_logos/icons8-instagram-50.png',
-            width: imageSize,
-            height: imageSize,
-            fit: BoxFit.cover,
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            print("X");
-          },
-          child: Image.asset(
-            'assets/social_logos/icons8-x-logo-50-2.png',
-            width: imageSize,
-            height: imageSize,
-            fit: BoxFit.cover,
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            print("facebook");
-          },
-          child: Image.asset(
-            'assets/social_logos/icons8-facebook-50-2.png',
-            width: imageSize,
-            height: imageSize,
-            fit: BoxFit.cover,
-          ),
-        ),
+        // GestureDetector(
+        //   onTap: () {
+        //     print("instagram");
+        //   },
+        //   child: Image.asset(
+        //     'assets/social_logos/icons8-instagram-50.png',
+        //     width: imageSize,
+        //     height: imageSize,
+        //     fit: BoxFit.cover,
+        //   ),
+        // ),
+        // GestureDetector(
+        //   onTap: () {
+        //     print("X");
+        //   },
+        //   child: Image.asset(
+        //     'assets/social_logos/icons8-x-logo-50-2.png',
+        //     width: imageSize,
+        //     height: imageSize,
+        //     fit: BoxFit.cover,
+        //   ),
+        // ),
+        // GestureDetector(
+        //   onTap: () {
+        //     print("facebook");
+        //   },
+        //   child: Image.asset(
+        //     'assets/social_logos/icons8-facebook-50-2.png',
+        //     width: imageSize,
+        //     height: imageSize,
+        //     fit: BoxFit.cover,
+        //   ),
+        // ),
       ],
     );
   }
