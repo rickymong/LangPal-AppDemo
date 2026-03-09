@@ -187,7 +187,7 @@ Widget build(BuildContext context) {
         Expanded(
           child: Consumer<UserNotifier>(
             builder: (context, appState, child) {
-              return StatBox(isDarkMode: _isDarkMode, icon: Icons.local_fire_department, value: '${appState.dayStreak}', label: 'Day Streak', iconColor: const Color(0xFFFF9600), backgroundColor: const Color(0xFFFFF4E5));
+              return StatBox(isDarkMode: _isDarkMode, icon: Icons.local_fire_department, value: '${appState.user?.streak ?? -2}', label: 'Day Streak', iconColor: const Color(0xFFFF9600), backgroundColor: const Color(0xFFFFF4E5));
             },
           ),
         ),

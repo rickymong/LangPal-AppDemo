@@ -18,7 +18,7 @@ class UserNotifier extends ChangeNotifier{
   User.User? get user => _user;
 
   //Profile stats (queried frm DB)
-  int _dayStreak = 7;
+  int _dayStreak = -1;
   int _totalXP = 1250;
   int _currentDailyXP = 10;
   int _dailyGoal = 50;
@@ -137,9 +137,10 @@ Future<void> _checkInitialState() async {
       if(_user != null){
         print("user id: ${user!.id}");
       }
+      print("USER TO STRING HERE: $user");
        final data = await SupabaseService.checkStreakOnOpen(_user!.id);
             _user!.streak = data['streak'] as int;
-            _user!.streak_updated_at = DateTime.parse(data['streak_updated'] as String);
+            _user!.streak_updated = DateTime.parse(data['streak_updated'] as String);
       // Fetch user's AI partners
       _dayStreak = _user!.streak;
       _aiPartners = await SupabaseService.fetchUserAiPartners();
@@ -155,7 +156,9 @@ Future<void> _checkInitialState() async {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
+      print("ERROR IN LOADUSERDATA");
       _error = e.toString();
+      print(_error);
       _isLoading = false;
       notifyListeners();
     }
@@ -286,7 +289,7 @@ Future<void> _checkInitialState() async {
   }
 
   // Method called when a game is completed
-  void completeGame(int gameXP) {
+  void completeGame(int gameXP) async {
     // Add the game's XP
     addXP(gameXP);
     
@@ -299,9 +302,20 @@ Future<void> _checkInitialState() async {
         // Award bonus XP for completing daily challenge
         addXP(_dailyChallengeBonus);
       }
-      
       notifyListeners();
     }
+    try{
+      final response = await SupabaseService.completeActivity(user!.id);
+      if(user!.streak != response["streak"]){
+        _user!.streak = response["streak"];
+      }
+     // print("response of completeActivity: ${response}");
+    }
+    catch(e){
+      print("error in complete activity: ${e.toString()}");
+    }
+    notifyListeners();
+    //print("end completeGame");
   }
 
 

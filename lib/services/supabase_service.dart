@@ -114,23 +114,29 @@ final googleAuthorization = await googleAccount.authorizationClient.authorizatio
     print("in fetchUserProfile");
     final userId = currentUserId;
     if (userId == null) return null;
-    
-    final response = await client
+    var response;
+    var languages;
+    var languagesResponse;
+    try{
+     response = await client
         .from('user_profiles')
         .select()
         .eq('id', userId)
         .single();
 
     // Fetch user's languages
-    final languagesResponse = await client
+     languagesResponse = await client
         .from('user_languages')
         .select('language')
         .eq('user_id', userId);
 
-    final languages = (languagesResponse as List)
+     languages = (languagesResponse as List)
         .map((e) => e['language'] as String)
-        .toList();
-    print("fetcherUserProfile: user name: ${response["name"]}");
+        .toList();    
+    }catch(e){
+      print("error caught in fetchUserProfile");
+      print(e);
+    }
     return app_user.User(
       id: response['id'],
       name: response['name'],
@@ -139,7 +145,7 @@ final googleAuthorization = await googleAccount.authorizationClient.authorizatio
       languages: languages,
       profile_image_path: response['profile_image_url'],
       streak: response["streak"],
-      streak_updated_at: response["streak_update"],
+      streak_updated: DateTime.parse(response["streak_updated"]),
       timezone: response["timezone"]
     );
   }
@@ -163,7 +169,8 @@ final googleAuthorization = await googleAccount.authorizationClient.authorizatio
     }
   }
 
-Future<Map<String, dynamic>> completeActivity(String userId) async {
+ static Future<Map<String, dynamic>> completeActivity(String userId) async {
+  print("running completeActivity");
   final timezone = DateTime.now().timeZoneName;
   return await client.rpc('complete_activity', params: {
     'user_id': userId,
