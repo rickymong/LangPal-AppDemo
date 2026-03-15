@@ -13,7 +13,7 @@ class BoardTile extends StatelessWidget {
     final height = MediaQuery.of(context).size.height;
     return Container(
       margin: const EdgeInsets.all(4),
-      height: height * 0.1,
+      height: height * 0.05,
       width: width * 0.1,
       alignment: Alignment.center,
       decoration: BoxDecoration(

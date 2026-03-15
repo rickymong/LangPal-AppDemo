@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/games/wordle/models/letterModel.dart';
 
 const _qwerty = [
   ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
@@ -7,14 +8,18 @@ const _qwerty = [
 ];
 
 class Keyboard extends StatelessWidget{
-  const Keyboard({Key? key, required this.onKeyTapped, required this.onDeleteTapped, required this.onEnterTapped}) : super(key: key);
+  const Keyboard({Key? key, required this.onKeyTapped, required this.onDeleteTapped, required this.onEnterTapped, required this.letters}) : super(key: key);
 
   final void Function(String) onKeyTapped;
   final VoidCallback onDeleteTapped;
   final VoidCallback onEnterTapped;
+  final Set<Letter> letters;
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: _qwerty.map((keyrow) => Row(
@@ -25,14 +30,19 @@ class Keyboard extends StatelessWidget{
               return _KeyboardButton.delete(onTap: onDeleteTapped);
             } else if (letter == "ENTER"){
               return _KeyboardButton.enter(onTap: onEnterTapped);
-            }else{
-              return _KeyboardButton(
-                onTap: () => onKeyTapped(letter),
-                letter: letter,
-                backgroundColor: Colors.grey
-              );
             }
-          }
+
+            final letterKey = letters.firstWhere((e) => e.val == letter, orElse: () => Letter.empty());
+
+            return _KeyboardButton(
+              height: height * 0.05,
+              width: width * 0.08,
+              onTap: () => onKeyTapped(letter),
+              letter: letter,
+              backgroundColor: letterKey != Letter.empty() ? letterKey.backgroundColor : Colors.grey
+            );
+            }
+          
         ).toList()
       )
       ).toList()
@@ -59,6 +69,7 @@ class _KeyboardButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return Padding(
       padding: const EdgeInsets.symmetric( //do these need to be made relative - do they cause overflow errors ever?
         vertical: 3.0,

@@ -14,7 +14,7 @@ class Word extends Equatable {
 
   void addLetter(String val) {
     final currentIndex = letters.indexWhere((e) => e.val.isEmpty);
-    if (currentIndex != -1) {
+    if (currentIndex != -1) { //-1 indicates empty value not found
       letters[currentIndex] = Letter(val: val);
     }
   }

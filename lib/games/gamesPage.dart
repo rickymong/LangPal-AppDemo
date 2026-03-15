@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:langpal_prototype/games/dailyChallengeTracker.dart';
 import 'package:langpal_prototype/games/sentenceBuilder.dart';
 import 'package:langpal_prototype/games/vocabMatcher.dart';
+import 'package:langpal_prototype/games/wordle/views/wordleScreen.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
 import '../types/games.dart';
@@ -41,6 +42,15 @@ class _GamesPageState extends State<GamesPage> {
       difficulty: 'Easy',
       icon: Icons.bolt,
       summary: 'Quick vocabulary challenges',
+    ),
+    Game(
+      name: 'Vocab Vault',
+      xp: 60,
+      difficulty: "Hard",
+      icon: Icons.lock,
+      time: 120,
+      summary: 'Guess letters to crack the vault to find the word of the day!',
+      gamePage: WordleScreen(),
     ),
     Game(
       name: 'Grammar Quest',
