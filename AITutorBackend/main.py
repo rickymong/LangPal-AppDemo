@@ -163,8 +163,10 @@ def score_matching(payload: MatchingScoreRequest) -> dict:
 @app.post("/games/wordle/start")
 def start_wordle(payload: WordleStartRequest) -> dict:
     """Generate a target word for the Wordle game."""
+    print(payload.user_id)
     try:
         return start_wordle_game(payload.user_id)
     except Exception as exc:
+        import traceback; traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

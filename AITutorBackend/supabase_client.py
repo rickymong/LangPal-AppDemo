@@ -7,17 +7,19 @@ from supabase import Client, create_client
 
 # ## Set SUPABASE_URL and SUPABASE_ANON_KEY as environment variables before running the app.
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_KEY = os.getenv("SUPABASE_PUB_KEY") #WAS SUPABASE_ANON_KEY
 _client: Optional[Client] = None
 
 
 def get_supabase_client() -> Client:
     """Return a singleton Supabase client so we reuse the same connection."""
+    print("in get_supabase")
     global _client
     if _client is None:
         if not SUPABASE_URL or not SUPABASE_KEY:
             raise RuntimeError("Supabase credentials are missing.")
         _client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        print("returning supabase client")
     return _client
 
 
@@ -37,20 +39,23 @@ def fetch_user_languages(user_id: str) -> List[str]:
 
 def fetch_user_context(user_id: str) -> Dict[str, str]:
     """Read the user's preferred language and chat summary from Supabase."""
+    
+    print("in fetch user context")
     client = get_supabase_client()
     response = (
         client.table("user_profiles")
         .select("current_language, chat_summary")
         .eq("id", user_id)
-        .single()
         .execute()
     )
     data = response.data or {}
     language = data.get("current_language")
+    print(f"language: {language}")
     if not language:
         language_options = fetch_user_languages(user_id)
         language = language_options[0] if language_options else "French"
     summary = data.get("chat_summary", "")
+    print("returning from fetch user context")
     return {"language": language, "summary": summary}
 
 
