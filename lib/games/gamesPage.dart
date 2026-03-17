@@ -50,7 +50,7 @@ class _GamesPageState extends State<GamesPage> {
       icon: Icons.lock,
       time: 120,
       summary: 'Guess letters to crack the vault to find the word of the day!',
-      gamePage: WordleScreen(),
+      gamePage: WordleScreen(xp: 60),
     ),
     Game(
       name: 'Grammar Quest',

@@ -12,19 +12,26 @@ import '../models/letterModel.dart';
 import '../models/wordModel.dart';
 
 //https://www.youtube.com/watch?v=_W0RN_Cqhpg&t=341s - source of design
+
+///BUGS:
+/// [] letters appear Yellow even if accounted for
+///   -- example if solution is BOLD, BLOOD will show one O green and the other Yellow, despite only 1 O being required
+
 ///Tasklist:
+/// [] create letter tile animation
 /// [] create API service class
 /// [] before evaluating the users entry, first check if it is a valid word
 /// [] dispose the post game snackbar before leaving the screen
 /// [] add hints?
+/// [] connect the game to game management state - UserNotifier.completeGame(widget.xp)
 
 
 
 enum GameStatus { playing, submitting, lost, won }
 
 class WordleScreen extends StatefulWidget {
-  const WordleScreen({Key? key}) : super(key: key);
-
+  const WordleScreen({Key? key, required this.xp}) : super(key: key);
+  final int xp;
   _WordleScreenState createState() => _WordleScreenState();
 }
 
