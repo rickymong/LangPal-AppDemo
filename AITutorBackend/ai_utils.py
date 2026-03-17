@@ -1,40 +1,52 @@
-"""Helpers that talk to OpenAI and ElevenLabs."""
+"""Helpers that talk to Gemini and ElevenLabs."""
 from typing import Any, Dict, List
 
+import base64
 import os
 import re
 import json
 
-# ## Set OPENAI_API_KEY as an environment variable before running the app.
-from openai import OpenAI
+import google.generativeai as genai
 
 # ## Set ELEVENLABS_API_KEY as an environment variable before running the app.
 import requests
 
-OPENAI_MODEL = "gpt-3.5-turbo"
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-pro")
 ELEVENLABS_VOICE_ID = "placeholder_voice"
-ELEVENLABS_URL = "https://api.elevenlabs.io/v1/text-to-speech"
+ELEVENLABS_TTS_URL = os.getenv(
+    "ELEVENLABS_TTS_URL", "https://api.elevenlabs.io/v1/text-to-speech"
+)
+ELEVENLABS_STT_URL = os.getenv(
+    "ELEVENLABS_STT_URL", "https://api.elevenlabs.io/v1/speech-to-text"
+)
+ELEVENLABS_STT_MODEL = os.getenv(
+    "ELEVENLABS_STT_MODEL", "eleven_multilingual_v2"
+)
 
-_openai_client: OpenAI | None = None
+_gemini_model: Any | None = None
 
 
-def get_openai_client() -> OpenAI:
-    """Return a single OpenAI client so we avoid re-creating it."""
-    global _openai_client
-    if _openai_client is None:
-        _openai_client = OpenAI()
-    return _openai_client
+def get_gemini_model() -> Any:
+    """Return a single Gemini model so we avoid re-configuring it."""
+    global _gemini_model
+    if _gemini_model is None:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise RuntimeError("Set GEMINI_API_KEY before running the app.")
+        genai.configure(api_key=api_key)
+        _gemini_model = genai.GenerativeModel(GEMINI_MODEL)
+    return _gemini_model
 
 
-def call_openai(prompt: str) -> str:
-    """Send a prompt to OpenAI and return the plain text response."""
-    client = get_openai_client()
-    chat = client.chat.completions.create(
-        model=OPENAI_MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.7,
+def call_gemini(prompt: str) -> str:
+    """Send a prompt to Gemini and return the plain text response."""
+    model = get_gemini_model()
+    response = model.generate_content(
+        prompt,
+        generation_config={"temperature": 0.7},
     )
-    return chat.choices[0].message.content.strip()
+    text = getattr(response, "text", "") or ""
+    return text.strip()
 
 
 def build_dual_language_prompt(task: str, language: str, user_input: str, summary: str) -> str:
@@ -83,7 +95,7 @@ def _load_json_response(raw_text: str) -> Dict[str, Any]:
 
 
 def generate_fill_in_blank_questions(language: str, summary: str, num_questions: int = 3) -> Dict[str, List[Dict[str, str]]]:
-    """Ask OpenAI for fill-in-the-blank prompts plus answer key."""
+    """Ask Gemini for fill-in-the-blank prompts plus answer key."""
     prompt = (
         "Create a fill-in-the-blank drill for a language learner.\n"
         f"Language: {language}.\n"
@@ -92,7 +104,7 @@ def generate_fill_in_blank_questions(language: str, summary: str, num_questions:
         "{\n  \"questions\": [\n    {\"sentence\": \"... ___ ...\", \"options\": [\"option\"], \"answer\": \"correct word\", \"explanation\": \"short English hint\"}\n  ],\n  \"tip\": \"short encouragement\"\n}\n"
         f"Context: {summary or 'Fresh session.'}"
     )
-    raw = call_openai(prompt)
+    raw = call_gemini(prompt)
     data = _load_json_response(raw)
     return data or {
         "questions": [
@@ -108,7 +120,7 @@ def generate_fill_in_blank_questions(language: str, summary: str, num_questions:
 
 
 def generate_matching_pairs(language: str, num_pairs: int = 4) -> Dict[str, List[Dict[str, str]]]:
-    """Ask OpenAI for vocab pairs for matching exercises."""
+    """Ask Gemini for vocab pairs for matching exercises."""
     prompt = (
         "Provide vocabulary flashcards for matching.\n"
         f"Language: {language}.\n"
@@ -116,7 +128,7 @@ def generate_matching_pairs(language: str, num_pairs: int = 4) -> Dict[str, List
         "{\n  \"pairs\": [\n    {\"target_word\": \"bonjour\", \"english_word\": \"hello\", \"hint\": \"greeting\"}\n  ]\n}\n"
         "Output JSON only. Keep hints short in English."
     )
-    raw = call_openai(prompt)
+    raw = call_gemini(prompt)
     data = _load_json_response(raw)
     if not data:
         data = {
@@ -132,7 +144,7 @@ def generate_matching_pairs(language: str, num_pairs: int = 4) -> Dict[str, List
 def generate_language_reply(task: str, language: str, user_input: str, summary: str) -> Dict[str, str]:
     """Generate a grammar-focused response that follows the dual-language rule."""
     prompt = build_dual_language_prompt(task, language, user_input, summary)
-    response = call_openai(prompt)
+    response = call_gemini(prompt)
     parsed = parse_dual_language_response(response)
     return {
         "target_text": parsed["target_text"],
@@ -144,14 +156,14 @@ def generate_language_reply(task: str, language: str, user_input: str, summary: 
 
 
 def generate_listening_material(language: str, summary: str) -> Dict[str, List[str]]:
-    """Ask OpenAI for a short listening passage plus questions."""
+    """Ask Gemini for a short listening passage plus questions."""
     prompt = (
         "Create a short listening passage in {language}.\n"
         "After the passage, give 1-2 comprehension questions in the target language.\n"
         "Then provide English explanations for the answers."
     ).format(language=language)
     prompt = f"{prompt}\nContext: {summary or 'Fresh session.'}"
-    response = call_openai(prompt)
+    response = call_gemini(prompt)
     # Simple parsing: assume sections separated by blank lines.
     blocks = [block.strip() for block in response.split("\n\n") if block.strip()]
     passage = blocks[0] if blocks else response
@@ -184,7 +196,7 @@ def synthesize_speech(text: str) -> str:
         "voice_settings": {"stability": 0.3, "similarity_boost": 0.7},
     }
     response = requests.post(
-        f"{ELEVENLABS_URL}/{ELEVENLABS_VOICE_ID}",
+        f"{ELEVENLABS_TTS_URL}/{ELEVENLABS_VOICE_ID}",
         json=payload,
         headers=headers,
         timeout=30,
@@ -192,3 +204,52 @@ def synthesize_speech(text: str) -> str:
     response.raise_for_status()
     # ## Upload this audio bytes to storage (e.g., Supabase storage) and return the public URL.
     return "Audio generation successful. Upload audio bytes to storage and return URL."
+
+
+def transcribe_speech(audio_base64: str, mime_type: str = "audio/mpeg") -> str:
+    """Call ElevenLabs speech-to-text and return the transcript."""
+    api_key = os.getenv("ELEVENLABS_API_KEY")
+    if not api_key:
+        raise RuntimeError("Set ELEVENLABS_API_KEY to enable transcription.")
+    if not audio_base64:
+        raise ValueError("audio_base64 is required for transcription.")
+
+    audio_bytes = base64.b64decode(audio_base64)
+    headers = {"xi-api-key": api_key}
+    data = {"model_id": ELEVENLABS_STT_MODEL}
+    files = {
+        "file": ("speech_input", audio_bytes, mime_type or "application/octet-stream")
+    }
+    response = requests.post(
+        ELEVENLABS_STT_URL,
+        headers=headers,
+        data=data,
+        files=files,
+        timeout=60,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    return payload.get("text", "").strip()
+
+
+def generate_wordle_word(language: str) -> Dict[str, str]:
+    """Ask Gemini for a common 5-letter word in the target language."""
+    prompt = (
+        f"Provide a common, well-known 5-letter word in {language}.\n"
+        "Avoid obscure or archaic words.\n"
+        "Respond ONLY in valid JSON with this shape: \n"
+        "{\n  \"word\": \"apple\", \"hint\": \"a red or green fruit\"\n}\n"
+        "The hint should be in English."
+    )
+    raw = call_gemini(prompt)
+    data = _load_json_response(raw)
+
+    # Validation
+    word = data.get("word", "").strip().lower()
+    if not word or len(word) != 5:
+        # Fallback if AI fails parsing or provides wrong length
+        word = "apple" if language.lower() == "english" else "mundo"
+        data = {"word": word, "hint": "A common word to get you started."}
+
+    return data
+

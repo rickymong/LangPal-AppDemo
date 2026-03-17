@@ -43,7 +43,7 @@ def start_matching_game(user_id: str, num_pairs: int = 4) -> Dict[str, object]:
     pairs = data.get("pairs", [])
     return {
         "language": language,
-        "pairs": pairs, #List of maps/dictionaries
+        "pairs": pairs,
         "total_pairs": len(pairs),
     }
 
@@ -54,3 +54,4 @@ def score_matching_game(user_id: str, pairs: List[Dict[str, str]]) -> Dict[str, 
     summary = _score_matching_pairs(pairs)
     summary["language"] = context["language"]
     return summary
+
