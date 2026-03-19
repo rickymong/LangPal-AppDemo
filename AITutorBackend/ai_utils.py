@@ -11,7 +11,11 @@ import google.generativeai as genai
 # ## Set ELEVENLABS_API_KEY as an environment variable before running the app.
 import requests
 
+# AI Provider Configuration
+AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini").lower()
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-pro")
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:8b")
 ELEVENLABS_VOICE_ID = "placeholder_voice"
 ELEVENLABS_TTS_URL = os.getenv(
     "ELEVENLABS_TTS_URL", "https://api.elevenlabs.io/v1/text-to-speech"
@@ -47,6 +51,32 @@ def call_gemini(prompt: str) -> str:
     )
     text = getattr(response, "text", "") or ""
     return text.strip()
+
+
+def call_ollama(prompt: str) -> str:
+    """Send a prompt to local Ollama and return the plain text response."""
+    payload = {
+        "model": OLLAMA_MODEL,
+        "prompt": prompt,
+        "stream": False,
+        "options": {
+            "temperature": 0.7
+        }
+    }
+    try:
+        response = requests.post(OLLAMA_URL, json=payload, timeout=120)
+        response.raise_for_status()
+        return response.json().get("response", "").strip()
+    except requests.exceptions.RequestException as e:
+        return '{"error": "Failed to connect to Ollama. Is the server running?"}'
+
+
+def call_ai(prompt: str) -> str:
+    """Route the prompt to the correct AI provider based on environment config."""
+    if AI_PROVIDER == "ollama":
+        return call_ollama(prompt)
+    else:
+        return call_gemini(prompt)
 
 
 def build_dual_language_prompt(task: str, language: str, user_input: str, summary: str) -> str:
@@ -88,9 +118,16 @@ def parse_dual_language_response(raw_text: str) -> Dict[str, str]:
 
 
 def _load_json_response(raw_text: str) -> Dict[str, Any]:
+    text = raw_text.strip()
+    if text.startswith("```json"):
+        text = text[7:]
+    elif text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
     try:
-        return json.loads(raw_text)
-    except json.JSONDecodeError:
+        return json.loads(text.strip())
+    except json.JSONDecodeError as e:
         return {}
 
 
@@ -104,7 +141,7 @@ def generate_fill_in_blank_questions(language: str, summary: str, num_questions:
         "{\n  \"questions\": [\n    {\"sentence\": \"... ___ ...\", \"options\": [\"option\"], \"answer\": \"correct word\", \"explanation\": \"short English hint\"}\n  ],\n  \"tip\": \"short encouragement\"\n}\n"
         f"Context: {summary or 'Fresh session.'}"
     )
-    raw = call_gemini(prompt)
+    raw = call_ai(prompt)
     data = _load_json_response(raw)
     return data or {
         "questions": [
@@ -128,7 +165,7 @@ def generate_matching_pairs(language: str, num_pairs: int = 4) -> Dict[str, List
         "{\n  \"pairs\": [\n    {\"target_word\": \"bonjour\", \"english_word\": \"hello\", \"hint\": \"greeting\"}\n  ]\n}\n"
         "Output JSON only. Keep hints short in English."
     )
-    raw = call_gemini(prompt)
+    raw = call_ai(prompt)
     data = _load_json_response(raw)
     if not data:
         data = {
@@ -144,7 +181,7 @@ def generate_matching_pairs(language: str, num_pairs: int = 4) -> Dict[str, List
 def generate_language_reply(task: str, language: str, user_input: str, summary: str) -> Dict[str, str]:
     """Generate a grammar-focused response that follows the dual-language rule."""
     prompt = build_dual_language_prompt(task, language, user_input, summary)
-    response = call_gemini(prompt)
+    response = call_ai(prompt)
     parsed = parse_dual_language_response(response)
     return {
         "target_text": parsed["target_text"],
@@ -163,7 +200,7 @@ def generate_listening_material(language: str, summary: str) -> Dict[str, List[s
         "Then provide English explanations for the answers."
     ).format(language=language)
     prompt = f"{prompt}\nContext: {summary or 'Fresh session.'}"
-    response = call_gemini(prompt)
+    response = call_ai(prompt)
     # Simple parsing: assume sections separated by blank lines.
     blocks = [block.strip() for block in response.split("\n\n") if block.strip()]
     passage = blocks[0] if blocks else response
@@ -233,15 +270,15 @@ def transcribe_speech(audio_base64: str, mime_type: str = "audio/mpeg") -> str:
 
 
 def generate_wordle_word(language: str) -> Dict[str, str]:
-    """Ask Gemini for a common 5-letter word in the target language."""
+    """Ask AI for a random 5-letter word in the target language."""
     prompt = (
-        f"Provide a common, well-known 5-letter word in {language}.\n"
-        "Avoid obscure or archaic words.\n"
-        "Respond ONLY in valid JSON with this shape: \n"
-        "{\n  \"word\": \"apple\", \"hint\": \"a red or green fruit\"\n}\n"
-        "The hint should be in English."
+        f"Provide a completely random, well-known 5-letter word in {language}.\n"
+        "You must generate a different word every time. Avoid obscure words.\n"
+        "Respond ONLY in valid JSON with this exact shape: \n"
+        "{\n  \"word\": \"<your_random_5_letter_word>\", \"hint\": \"<short_english_hint>\"\n}\n"
+        "The hint must be written in English."
     )
-    raw = call_gemini(prompt)
+    raw = call_ai(prompt)
     data = _load_json_response(raw)
 
     # Validation
