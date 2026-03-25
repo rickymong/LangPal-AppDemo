@@ -26,6 +26,8 @@ class _SpeedVocabState extends State<SpeedVocab> {
   int _questionIndex = 0;
   int _correctAnswers = 0;
   bool _isFinished = false;
+  bool _isRevealingFeedback = false;
+  String? _selectedAnswer;
 
   late final List<_SpeedQuestion> _questions;
 
@@ -96,13 +98,25 @@ class _SpeedVocabState extends State<SpeedVocab> {
     }).toList();
   }
 
-  void _selectAnswer(String answer) {
-    if (_isFinished) return;
+  Future<void> _selectAnswer(String answer) async {
+    if (_isFinished || _isRevealingFeedback) return;
 
     final currentQuestion = _questions[_questionIndex];
-    if (answer == currentQuestion.correctAnswer) {
+    final isCorrect = answer == currentQuestion.correctAnswer;
+
+    setState(() {
+      _selectedAnswer = answer;
+      _isRevealingFeedback = true;
+    });
+
+    if (isCorrect) {
       _correctAnswers += 1;
     }
+
+    // Briefly show feedback colors before moving to the next question.
+    await Future.delayed(const Duration(milliseconds: 700));
+
+    if (!mounted || _isFinished) return;
 
     if (_questionIndex >= _questions.length - 1) {
       _finishGame();
@@ -111,7 +125,39 @@ class _SpeedVocabState extends State<SpeedVocab> {
 
     setState(() {
       _questionIndex += 1;
+      _selectedAnswer = null;
+      _isRevealingFeedback = false;
     });
+  }
+
+  Color _getOptionBorderColor(String option, _SpeedQuestion question) {
+    if (!_isRevealingFeedback) return const Color(0xFFE5E5E5);
+
+    if (option == question.correctAnswer) {
+      return const Color(0xFF58CC02);
+    }
+
+    return const Color(0xFFFF4B4B);
+  }
+
+  Color _getOptionBackgroundColor(String option, _SpeedQuestion question) {
+    if (!_isRevealingFeedback) return Colors.white;
+
+    if (option == question.correctAnswer) {
+      return const Color(0xFFE7F5E0);
+    }
+
+    return const Color(0xFFFFE8E8);
+  }
+
+  Color _getOptionTextColor(String option, _SpeedQuestion question) {
+    if (!_isRevealingFeedback) return Colors.black;
+
+    if (option == question.correctAnswer) {
+      return const Color(0xFF2E7D32);
+    }
+
+    return const Color(0xFFC62828);
   }
 
   void _finishGame() {
@@ -251,16 +297,20 @@ class _SpeedVocabState extends State<SpeedVocab> {
                   style: OutlinedButton.styleFrom(
                     alignment: Alignment.centerLeft,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    side: const BorderSide(color: Color(0xFFE5E5E5), width: 1.5),
+                    side: BorderSide(
+                      color: _getOptionBorderColor(option, current),
+                      width: 1.5,
+                    ),
+                    backgroundColor: _getOptionBackgroundColor(option, current),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  onPressed: () => _selectAnswer(option),
+                  onPressed: _isRevealingFeedback ? null : () => _selectAnswer(option),
                   child: Text(
                     option,
-                    style: const TextStyle(
-                      color: Colors.black,
+                    style: TextStyle(
+                      color: _getOptionTextColor(option, current),
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
