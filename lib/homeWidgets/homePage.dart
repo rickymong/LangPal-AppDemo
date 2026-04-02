@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:langpal_prototype/audio_tutor/call_screen.dart';
 import 'package:langpal_prototype/profile/profile.dart';
 import 'package:langpal_prototype/types/aiPartner.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
-import '../conversations/chatPage.dart';
+import '../text_tutor/chatPage.dart';
 import '../games/gamesPage.dart';
 import '../types/lesson.dart';
 import 'progressBar.dart';
-
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -64,47 +64,48 @@ class _HomeScreenState extends State<HomeScreen> {
       icon: Icons.luggage,
     ),
   ];
-@override
-Widget build(BuildContext context) {
-  final screenHeight = MediaQuery.of(context).size.height;
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-  return Consumer<UserNotifier>(
-    builder: (context, userNotifier, child) {
-      // Show loading if data is still loading
-      if (userNotifier.isLoading) {
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
-      }
+    return Consumer<UserNotifier>(
+      builder: (context, userNotifier, child) {
+        // Show loading if data is still loading
+        if (userNotifier.isLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-      // Show your actual home screen content
-      return Scaffold(
-        backgroundColor: _isDarkMode ? const Color(0xFF1F1F1F) : Colors.white,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  SizedBox(height: screenHeight * 0.04),
-                  _buildStatsRow(),
-                  SizedBox(height: screenHeight * 0.04),
-                  DailyProgress(isDarkMode: _isDarkMode),
-                  SizedBox(height: screenHeight * 0.04),
-                  _buildQuickActions(),
-                  SizedBox(height: screenHeight * 0.04),
-                  _buildLessonsSection(),
-                ],
+        // Show your actual home screen content
+        return Scaffold(
+          backgroundColor: _isDarkMode ? const Color(0xFF1F1F1F) : Colors.white,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.all(screenWidth * 0.05),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    SizedBox(height: screenHeight * 0.04),
+                    _buildStatsRow(),
+                    SizedBox(height: screenHeight * 0.04),
+                    DailyProgress(isDarkMode: _isDarkMode),
+                    SizedBox(height: screenHeight * 0.04),
+                    _buildQuickActions(),
+                    SizedBox(height: screenHeight * 0.04),
+                    _buildLessonsSection(),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Widget _buildHeader() {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -114,11 +115,12 @@ Widget build(BuildContext context) {
         // Parrot icon (using emoji in a container for visual)
         GestureDetector(
           onTap: () => {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => Profile()))
+            Navigator.push(
+                context, MaterialPageRoute(builder: (context) => Profile()))
           },
           child: Container(
-            width: 70,
-            height: 70,
+            width: screenWidth * 0.175,
+            height: screenWidth * 0.175,
             // decoration: BoxDecoration(
             //   gradient: const LinearGradient(
             //     colors: [Color(0xFF58CC02), Color(0xFF89E219)],
@@ -140,7 +142,7 @@ Widget build(BuildContext context) {
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: screenWidth * 0.03),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -187,7 +189,13 @@ Widget build(BuildContext context) {
         Expanded(
           child: Consumer<UserNotifier>(
             builder: (context, appState, child) {
-              return StatBox(isDarkMode: _isDarkMode, icon: Icons.local_fire_department, value: '${appState.user?.streak ?? -2}', label: 'Day Streak', iconColor: const Color(0xFFFF9600), backgroundColor: const Color(0xFFFFF4E5));
+              return StatBox(
+                  isDarkMode: _isDarkMode,
+                  icon: Icons.local_fire_department,
+                  value: '${appState.user?.streak ?? -2}',
+                  label: 'Day Streak',
+                  iconColor: const Color(0xFFFF9600),
+                  backgroundColor: const Color(0xFFFFF4E5));
             },
           ),
         ),
@@ -195,7 +203,13 @@ Widget build(BuildContext context) {
         Expanded(
           child: Consumer<UserNotifier>(
             builder: (context, appState, child) {
-              return StatBox(isDarkMode: _isDarkMode, icon: Icons.emoji_events, value: '${appState.totalXP}', label: 'Total XP', iconColor: const Color(0xFFFFC800), backgroundColor: const Color(0xFFFFFBE6));
+              return StatBox(
+                  isDarkMode: _isDarkMode,
+                  icon: Icons.emoji_events,
+                  value: '${appState.totalXP}',
+                  label: 'Total XP',
+                  iconColor: const Color(0xFFFFC800),
+                  backgroundColor: const Color(0xFFFFFBE6));
             },
           ),
         ),
@@ -203,7 +217,13 @@ Widget build(BuildContext context) {
         Expanded(
           child: Consumer<UserNotifier>(
             builder: (context, appState, child) {
-              return StatBox(isDarkMode: _isDarkMode, icon: Icons.radio_button_checked, value: '${appState.currentDailyXP}/${appState.dailyGoal}', label: 'Daily Goal', iconColor: const Color(0xFF58CC02), backgroundColor: const Color(0xFFE7F5E0));
+              return StatBox(
+                  isDarkMode: _isDarkMode,
+                  icon: Icons.radio_button_checked,
+                  value: '${appState.currentDailyXP}/${appState.dailyGoal}',
+                  label: 'Daily Goal',
+                  iconColor: const Color(0xFF58CC02),
+                  backgroundColor: const Color(0xFFE7F5E0));
             },
           ),
         ),
@@ -212,7 +232,13 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildQuickActions() {
-    AiPartner dummyPartner = AiPartner(name: "Johnson", id: "999", language: "Spanish", flag_path: "assets/flags/spain_flag.jpr");
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    AiPartner dummyPartner = AiPartner(
+        name: "Johnson",
+        id: "999",
+        language: "Spanish",
+        flag_path: "assets/flags/spain_flag.jpr");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -224,7 +250,7 @@ Widget build(BuildContext context) {
             color: _isDarkMode ? Colors.white : Colors.black,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: screenWidth * 0.03),
         Row(
           children: [
             Expanded(
@@ -235,14 +261,15 @@ Widget build(BuildContext context) {
                 backgroundColor: const Color(0xFFE0F4FF),
                 iconColor: const Color(0xFF1CB0F6),
                 onTap: () {
-                  Navigator.push(context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatPage(aiPartner: dummyPartner),
-                  ));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatPage(aiPartner: dummyPartner),
+                      ));
                 },
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: screenWidth * 0.03),
             Expanded(
               child: _buildQuickActionButton(
                 icon: Icons.videogame_asset,
@@ -251,18 +278,18 @@ Widget build(BuildContext context) {
                 backgroundColor: const Color(0xFFFFF4E5),
                 iconColor: const Color(0xFFFF9600),
                 onTap: () {
-                   Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const GamesPage(),
-                        ),
-                      );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const GamesPage(),
+                    ),
+                  );
                 },
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: screenHeight * 0.03),
         Row(
           children: [
             Expanded(
@@ -277,7 +304,7 @@ Widget build(BuildContext context) {
                 },
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: screenWidth * 0.03),
             Expanded(
               child: _buildQuickActionButton(
                 icon: Icons.bolt,
@@ -292,6 +319,25 @@ Widget build(BuildContext context) {
             ),
           ],
         ),
+        SizedBox(height: screenHeight * 0.03),
+        _buildCallActionButton(
+            icon: Icons.phone,
+            label: "Live Practice",
+            subtitle: "have a real conversation with AI",
+            backgroundColor: const Color.fromARGB(255, 49, 55, 80),
+            iconColor: Colors.white,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CallScreen(
+                    characterName: "Robot",
+                    language: "Spanish",
+                  ),
+                ),
+              );
+            }
+        )
       ],
     );
   }
@@ -304,6 +350,8 @@ Widget build(BuildContext context) {
     required Color iconColor,
     required VoidCallback onTap,
   }) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -317,7 +365,7 @@ Widget build(BuildContext context) {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, color: iconColor, size: 28),
-            const SizedBox(height: 12),
+            SizedBox(height: screenHeight * 0.03),
             Text(
               label,
               style: TextStyle(
@@ -326,7 +374,54 @@ Widget build(BuildContext context) {
                 color: _isDarkMode ? Colors.white : Colors.black,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: screenHeight * 0.01),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 12,
+                color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCallActionButton({
+    required IconData icon,
+    required String label,
+    required String subtitle,
+    required Color backgroundColor,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: screenWidth * 0.9,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _isDarkMode ? const Color(0xFF2A2A2A) : backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: iconColor, size: 28),
+            SizedBox(height: screenHeight * 0.03),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: _isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+            SizedBox(height: screenHeight * 0.01),
             Text(
               subtitle,
               style: TextStyle(
@@ -341,6 +436,8 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildLessonsSection() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -352,7 +449,7 @@ Widget build(BuildContext context) {
             color: _isDarkMode ? Colors.white : Colors.black,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: screenHeight * 0.04),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -367,7 +464,8 @@ Widget build(BuildContext context) {
 
   Widget _buildLessonCard(Lesson lesson) {
     final bool isLocked = lesson.lessonType == 'Locked';
-
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -375,9 +473,8 @@ Widget build(BuildContext context) {
         color: _isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _isDarkMode
-              ? const Color(0xFF3A3A3A)
-              : const Color(0xFFE5E5E5),
+          color:
+              _isDarkMode ? const Color(0xFF3A3A3A) : const Color(0xFFE5E5E5),
           width: 1,
         ),
       ),
@@ -403,7 +500,7 @@ Widget build(BuildContext context) {
               size: 24,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: screenWidth * 0.04),
           // Lesson details
           Expanded(
             child: Column(
@@ -448,7 +545,7 @@ Widget build(BuildContext context) {
                   ],
                 ),
                 if (!isLocked) ...[
-                  const SizedBox(height: 8),
+                  SizedBox(height: screenHeight * 0.02),
                   ProgressBar(
                     progress: lesson.progress,
                     height: 6,
@@ -458,20 +555,19 @@ Widget build(BuildContext context) {
                     progressColor: const Color(0xFF58CC02),
                   ),
                 ] else ...[
-                  const SizedBox(height: 4),
+                  SizedBox(height: screenHeight * 0.01),
                   Text(
                     lesson.lessonType,
                     style: TextStyle(
                       fontSize: 12,
-                      color:
-                          _isDarkMode ? Colors.grey[500] : Colors.grey[500],
+                      color: _isDarkMode ? Colors.grey[500] : Colors.grey[500],
                     ),
                   ),
                 ],
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: screenWidth * 0.02),
           Icon(
             Icons.chevron_right,
             color: _isDarkMode ? Colors.grey[600] : Colors.grey[400],
@@ -492,6 +588,8 @@ class DailyProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
     return Consumer<UserNotifier>(
       builder: (context, appState, child) {
         // Calculate progress as fraction
@@ -520,12 +618,12 @@ class DailyProgress extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: screenHeight * 0.03),
             ProgressBar(
               progress: progressFraction,
               height: 12,
               backgroundColor: const Color.fromARGB(255, 197, 194, 194),
-                 // _isDarkMode ? const Color.fromARGB(255, 117, 117, 117) : const Color(0xFFE5E5E5),
+              // _isDarkMode ? const Color.fromARGB(255, 117, 117, 117) : const Color(0xFFE5E5E5),
               progressColor: const Color(0xFF58CC02),
             ),
           ],
@@ -555,6 +653,8 @@ class StatBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -564,7 +664,7 @@ class StatBox extends StatelessWidget {
       child: Column(
         children: [
           Icon(icon, color: iconColor, size: 28),
-          const SizedBox(height: 8),
+          SizedBox(height: screenHeight * 0.02),
           Text(
             value,
             style: TextStyle(
@@ -573,7 +673,7 @@ class StatBox extends StatelessWidget {
               color: _isDarkMode ? Colors.white : Colors.black,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: screenHeight * 0.01),
           Text(
             label,
             style: TextStyle(
