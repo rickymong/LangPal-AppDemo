@@ -5,9 +5,9 @@ import os
 
 from supabase import Client, create_client
 
-# ## Set SUPABASE_URL and SUPABASE_ANON_KEY as environment variables before running the app.
+# ## Set SUPABASE_URL and SUPABASE_PUB_KEY as environment variables before running the app.
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_KEY = os.getenv("SUPABASE_PUB_KEY")
 _client: Optional[Client] = None
 
 

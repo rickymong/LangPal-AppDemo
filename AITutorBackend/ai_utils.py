@@ -182,29 +182,38 @@ def generate_listening_material(language: str, summary: str) -> Dict[str, List[s
         "chat_summary": passage[:120],
     }
 
-
+# Ruth's 11Labs integration (STT/TTS + /conversation endpoint)
+# Test code
 def synthesize_speech(text: str) -> str:
-    """Call ElevenLabs to generate speech and return a placeholder URL."""
+    """Call ElevenLabs to generate speech, upload to Supabase, return public URL."""
     api_key = os.getenv("ELEVENLABS_API_KEY")
     if not api_key:
         return "## Set ELEVENLABS_API_KEY to enable audio."
-    headers = {
-        "xi-api-key": api_key,
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "text": text,
-        "voice_settings": {"stability": 0.3, "similarity_boost": 0.7},
-    }
-    response = requests.post(
-        f"{ELEVENLABS_TTS_URL}/{ELEVENLABS_VOICE_ID}",
-        json=payload,
-        headers=headers,
-        timeout=30,
+
+    from elevenlabs.client import ElevenLabs
+    from supabase import create_client
+    import time
+
+    el_client = ElevenLabs(api_key=api_key)
+    audio_chunks = el_client.text_to_speech.convert(
+        voice_id="EXAVITQu4vr4xnSDxMaL",
+        text=text,
+        model_id="eleven_multilingual_v2"
     )
-    response.raise_for_status()
-    # ## Upload this audio bytes to storage (e.g., Supabase storage) and return the public URL.
-    return "Audio generation successful. Upload audio bytes to storage and return URL."
+
+    audio_bytes = b"".join(audio_chunks)
+
+    supabase = create_client(
+        os.getenv("SUPABASE_URL"),
+        os.getenv("SUPABASE_PUB_KEY")
+    )
+    filename = f"audio_{int(time.time())}.mp3"
+    supabase.storage.from_("audio").upload(
+        filename, audio_bytes, {"content-type": "audio/mpeg"}
+    )
+
+    url = supabase.storage.from_("audio").get_public_url(filename)
+    return url
 
 
 def transcribe_speech(audio_base64: str, mime_type: str = "audio/mpeg") -> str:
@@ -215,20 +224,15 @@ def transcribe_speech(audio_base64: str, mime_type: str = "audio/mpeg") -> str:
     if not audio_base64:
         raise ValueError("audio_base64 is required for transcription.")
 
+    from elevenlabs.client import ElevenLabs
+    import io
+
     audio_bytes = base64.b64decode(audio_base64)
-    headers = {"xi-api-key": api_key}
-    data = {"model_id": ELEVENLABS_STT_MODEL}
-    files = {
-        "file": ("speech_input", audio_bytes, mime_type or "application/octet-stream")
-    }
-    response = requests.post(
-        ELEVENLABS_STT_URL,
-        headers=headers,
-        data=data,
-        files=files,
-        timeout=60,
+    
+    client = ElevenLabs(api_key=api_key)
+    result = client.speech_to_text.convert(
+        file=("audio", io.BytesIO(audio_bytes), mime_type),
+        model_id="scribe_v1",
     )
-    response.raise_for_status()
-    payload = response.json()
-    return payload.get("text", "").strip()
+    return result.text.strip()
 

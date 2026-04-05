@@ -14,6 +14,7 @@ from fill_blanks import score_fill_blank_game, start_fill_blank_game
 from matching import score_matching_game, start_matching_game
 from fill_blanks import score_fill_blank_game, start_fill_blank_game
 from matching import score_matching_game, start_matching_game
+from conversation import run_conversation
 
 
 class WritingRequest(BaseModel):
@@ -112,6 +113,12 @@ class MatchingScoreRequest(BaseModel):
     user_id: str
     pairs: List[MatchingPairSelection]
 
+class ConversationRequest(BaseModel):
+    """Payload for voice conversation."""
+    user_id: str
+    audio_base64: str
+    mime_type: str = "audio/mpeg"
+
 
 app = FastAPI(title="LangPal AI Tutor", version="0.1.0")
 app.add_middleware(
@@ -193,3 +200,12 @@ def score_matching(payload: MatchingScoreRequest) -> dict:
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+# Ruth's 11Labs integration (STT/TTS + /conversation endpoint)
+# Test code
+@app.post("/conversation")
+def conversation(payload: ConversationRequest) -> dict:
+    """Run a full voice conversation turn: STT -> Gemini -> TTS."""
+    try:
+        return run_conversation(payload.user_id, payload.audio_base64, payload.mime_type)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
