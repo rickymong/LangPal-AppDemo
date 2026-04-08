@@ -15,9 +15,6 @@ import base64
 from elevenlabs import ElevenLabs
 import google.generativeai as genai
 
-# ---------------------------------------------------------------------------
-# Client initialisation (singleton pattern — created once, reused)
-# ---------------------------------------------------------------------------
 
 _eleven_client: ElevenLabs | None = None
 _gemini_model = None
@@ -47,9 +44,6 @@ def _get_gemini_model():
     return _gemini_model
 
 
-# =========================================================================
-# 1. SPEECH-TO-TEXT (ElevenLabs Scribe)
-# =========================================================================
 
 def transcribe_speech(
     audio_base64: str,
@@ -72,7 +66,6 @@ def transcribe_speech(
     """
     client = _get_eleven_client()
 
-    # Decode base64 → raw bytes
     audio_bytes = base64.b64decode(audio_base64)
 
     if len(audio_bytes) == 0:
@@ -84,7 +77,6 @@ def transcribe_speech(
         language_code=language_code,
     )
 
-    # Extract per-word data if available
     words = []
     if hasattr(result, "words") and result.words:
         words = [
@@ -102,10 +94,6 @@ def transcribe_speech(
         "words": words,
     }
 
-
-# =========================================================================
-# 2. GEMINI — AI RESPONSE GENERATION
-# =========================================================================
 
 SYSTEM_PROMPT_TEMPLATE = """You are an encouraging French language tutor having a spoken conversation with a learner.
 
@@ -164,9 +152,7 @@ def generate_language_reply(
 
     raw_text = response.text.strip()
 
-    # ------------------------------------------------------------------
-    # Response validation — parse JSON, fall back gracefully
-    # ------------------------------------------------------------------
+
     return _parse_gemini_response(raw_text, user_input, language)
 
 
@@ -175,21 +161,19 @@ def _parse_gemini_response(raw_text: str, user_input: str, language: str) -> dic
     Parse Gemini's JSON response with fallback handling.
     Gemini sometimes wraps JSON in markdown backticks or adds preamble.
     """
-    # Strip markdown code fences if present
     cleaned = raw_text
     if cleaned.startswith("```"):
-        # Remove opening fence (with optional "json" label)
+        
         first_newline = cleaned.index("\n") if "\n" in cleaned else 3
         cleaned = cleaned[first_newline + 1:]
     if cleaned.endswith("```"):
         cleaned = cleaned[:-3]
     cleaned = cleaned.strip()
 
-    # Attempt JSON parse
     try:
         parsed = json.loads(cleaned)
     except json.JSONDecodeError:
-        # Last resort: try to find JSON object in the text
+        
         start = cleaned.find("{")
         end = cleaned.rfind("}")
         if start != -1 and end != -1 and end > start:
@@ -201,7 +185,7 @@ def _parse_gemini_response(raw_text: str, user_input: str, language: str) -> dic
             parsed = None
 
     if parsed is None:
-        # Complete fallback — return the raw text as target_text
+   
         print(f"[WARNING] Gemini returned malformed response. Raw: {raw_text[:200]}")
         return {
             "target_text": raw_text[:300] if raw_text else "Désolé, pouvez-vous répéter ?",
@@ -211,7 +195,7 @@ def _parse_gemini_response(raw_text: str, user_input: str, language: str) -> dic
             "chat_summary": f"User said: {user_input}. Tutor had trouble responding.",
         }
 
-    # Validate expected fields exist, fill missing ones with defaults
+
     defaults = {
         "target_text": "Désolé, pouvez-vous répéter ?",
         "english_text": "Sorry, could you repeat that?",
@@ -227,9 +211,6 @@ def _parse_gemini_response(raw_text: str, user_input: str, language: str) -> dic
     return parsed
 
 
-# =========================================================================
-# 3. TEXT-TO-SPEECH (ElevenLabs)
-# =========================================================================
 
 def synthesize_speech(text: str) -> bytes:
     """
@@ -243,7 +224,7 @@ def synthesize_speech(text: str) -> bytes:
     """
     client = _get_eleven_client()
 
-    voice_id = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")  # Default: Rachel
+    voice_id = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")  
 
     audio_generator = client.text_to_speech.convert(
         voice_id=voice_id,
@@ -251,7 +232,6 @@ def synthesize_speech(text: str) -> bytes:
         model_id="eleven_multilingual_v2",
     )
 
-    # The SDK returns a generator — collect all chunks into bytes
     audio_bytes = b"".join(chunk for chunk in audio_generator)
 
     if len(audio_bytes) == 0:
