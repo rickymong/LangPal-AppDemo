@@ -17,9 +17,6 @@ load_dotenv()
 
 from conversation import run_conversation
 
-# ---------------------------------------------------------------------------
-# App
-# ---------------------------------------------------------------------------
 
 app = FastAPI(
     title="LangPal LivePractice API",
@@ -28,30 +25,22 @@ app = FastAPI(
 )
 
 
-# ---------------------------------------------------------------------------
-# Request / Response models
-# ---------------------------------------------------------------------------
 
 class ConversationRequest(BaseModel):
-    user_id: str                          # Supabase UUID from user_profiles
-    audio_base64: str                     # Base64-encoded audio from Flutter mic
-    mime_type: str = "audio/mpeg"         # Audio format (MP3 default)
+    user_id: str                         
+    audio_base64: str                    
+    mime_type: str = "audio/mpeg"        
 
 
 class ConversationResponse(BaseModel):
-    transcript: str | None                # What the user said (None if fallback)
-    target_text: str | None               # AI response in French
-    english_text: str | None              # English translation
-    tip: str | None                       # Grammar / vocab tip
-    audio_url: str | None                 # Public URL to AI's spoken response
-    fallback: bool                        # True if confidence was too low
-    confidence: float | None = None       # STT confidence (included on fallback)
-    error: str | None = None              # Error message if something broke
-
-
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
+    transcript: str | None               
+    target_text: str | None               
+    english_text: str | None            
+    tip: str | None                       
+    audio_url: str | None                 
+    fallback: bool                       
+    confidence: float | None = None      
+    error: str | None = None              
 
 @app.get("/")
 async def root():
@@ -114,7 +103,3 @@ async def conversation(request: ConversationRequest):
             detail=f"Pipeline error: {str(e)}",
         )
 
-
-# ---------------------------------------------------------------------------
-# Run with: uvicorn main:app --reload --port 8000
-# ---------------------------------------------------------------------------
