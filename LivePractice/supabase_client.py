@@ -11,13 +11,10 @@ import os
 import time
 from supabase import create_client, Client
 
-# ---------------------------------------------------------------------------
-# Client initialisation (singleton)
-# ---------------------------------------------------------------------------
 
 _supabase_client: Client | None = None
 
-AUDIO_BUCKET = "audio"  # Supabase storage bucket name
+AUDIO_BUCKET = "audio"  
 
 
 def _get_client() -> Client:
@@ -33,10 +30,6 @@ def _get_client() -> Client:
         _supabase_client = create_client(url, key)
     return _supabase_client
 
-
-# =========================================================================
-# 1. FETCH USER CONTEXT
-# =========================================================================
 
 def fetch_user_context(user_id: str) -> dict:
     """
@@ -67,16 +60,11 @@ def fetch_user_context(user_id: str) -> dict:
         }
     except Exception as e:
         print(f"[WARNING] Could not fetch user context for {user_id}: {e}")
-        # Default to French with no history — don't crash the pipeline
         return {
             "language": "French",
             "summary": "",
         }
 
-
-# =========================================================================
-# 2. UPSERT CHAT SUMMARY
-# =========================================================================
 
 def upsert_chat_summary(user_id: str, language: str, summary: str) -> None:
     """
@@ -96,13 +84,8 @@ def upsert_chat_summary(user_id: str, language: str, summary: str) -> None:
             on_conflict="id",
         ).execute()
     except Exception as e:
-        # Non-fatal — log and continue
         print(f"[WARNING] Failed to upsert chat summary for {user_id}: {e}")
 
-
-# =========================================================================
-# 3. UPLOAD AUDIO TO SUPABASE STORAGE
-# =========================================================================
 
 def upload_audio(audio_bytes: bytes, user_id: str) -> str:
     """
@@ -117,7 +100,6 @@ def upload_audio(audio_bytes: bytes, user_id: str) -> str:
     """
     client = _get_client()
 
-    # Unique filename: user_id + timestamp
     timestamp = int(time.time())
     filename = f"{user_id}_{timestamp}.mp3"
 
@@ -130,7 +112,6 @@ def upload_audio(audio_bytes: bytes, user_id: str) -> str:
     except Exception as e:
         raise RuntimeError(f"Supabase audio upload failed: {e}")
 
-    # Build the public URL
     supabase_url = os.getenv("SUPABASE_URL", "")
     public_url = f"{supabase_url}/storage/v1/object/public/{AUDIO_BUCKET}/{filename}"
 
