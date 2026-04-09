@@ -55,7 +55,7 @@ def fetch_user_context(user_id: str) -> dict:
         )
         data = response.data
         return {
-            "language": data.get("target_language", "French"),
+            "language": data.get("current_language", "French"),
             "summary": data.get("chat_summary", ""),
         }
     except Exception as e:
