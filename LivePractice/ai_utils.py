@@ -39,7 +39,7 @@ def _get_gemini_model():
         if not api_key:
             raise RuntimeError("Set GEMINI_API_KEY in your .env file.")
         genai.configure(api_key=api_key)
-        model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-pro")
+        model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
         _gemini_model = genai.GenerativeModel(model_name)
     return _gemini_model
 
