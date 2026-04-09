@@ -9,8 +9,10 @@ Handles:
 
 import os
 import time
+from dotenv import load_dotenv 
 from supabase import create_client, Client
 
+load_dotenv()
 
 _supabase_client: Client | None = None
 
