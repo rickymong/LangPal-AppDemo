@@ -48,7 +48,7 @@ def fetch_user_context(user_id: str) -> dict:
     try:
         response = (
             client.table("user_profiles")
-            .select("target_language, chat_summary")
+            .select("current_language, chat_summary")
             .eq("id", user_id)
             .single()
             .execute()
