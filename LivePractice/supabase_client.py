@@ -37,14 +37,13 @@ def fetch_user_context(user_id: str) -> dict:
     """
     Look up user's language preference and recent chat summary.
 
-    Returns:
-        {
-            "language": "French",
-            "summary": "User: Bonjour | Tutor: Bonjour! Comment allez-vous?"
-        }
-
     Falls back to defaults if user not found.
     """
+    # DEMO MODE: Hardcode test user for now
+    return {
+        "language": "French",
+        "summary": "User is learning French. Previous topics: greetings, how are you.",
+    }
     client = _get_client()
 
     try:
