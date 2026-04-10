@@ -5,14 +5,15 @@ import base64
 import os
 import re
 import json
-import json
+import hashlib
+import time
 
 import google.generativeai as genai
 
 # ## Set ELEVENLABS_API_KEY as an environment variable before running the app.
 import requests
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-pro")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 ELEVENLABS_VOICE_ID = "placeholder_voice"
 ELEVENLABS_TTS_URL = os.getenv(
     "ELEVENLABS_TTS_URL", "https://api.elevenlabs.io/v1/text-to-speech"
@@ -44,10 +45,34 @@ def call_gemini(prompt: str) -> str:
     model = get_gemini_model()
     response = model.generate_content(
         prompt,
-        generation_config={"temperature": 0.7},
+        generation_config={"temperature": 0.7, "max_output_tokens": 1024},
     )
     text = getattr(response, "text", "") or ""
     return text.strip()
+
+
+# Simple in-memory cache: key -> (timestamp, data)
+_response_cache: dict[str, tuple[float, dict]] = {}
+_CACHE_TTL = 300  # 5 minutes
+
+
+def _cache_key(prefix: str, language: str, count: int) -> str:
+    """Build a short hash key for caching."""
+    raw = f"{prefix}:{language}:{count}"
+    return hashlib.md5(raw.encode()).hexdigest()
+
+
+def get_cached(key: str) -> dict | None:
+    """Return cached data if still fresh, else None."""
+    entry = _response_cache.get(key)
+    if entry and (time.time() - entry[0]) < _CACHE_TTL:
+        return entry[1]
+    return None
+
+
+def set_cache(key: str, data: dict) -> None:
+    """Store data in cache with current timestamp."""
+    _response_cache[key] = (time.time(), data)
 
 
 def build_dual_language_prompt(task: str, language: str, user_input: str, summary: str) -> str:
@@ -97,6 +122,12 @@ def _load_json_response(raw_text: str) -> Dict[str, Any]:
 
 def generate_fill_in_blank_questions(language: str, summary: str, num_questions: int = 3) -> Dict[str, List[Dict[str, str]]]:
     """Ask Gemini for fill-in-the-blank prompts plus answer key."""
+    # Check cache first
+    ck = _cache_key("fill", language, num_questions)
+    cached = get_cached(ck)
+    if cached:
+        return cached
+
     prompt = (
         "Create a fill-in-the-blank drill for a language learner.\n"
         f"Language: {language}.\n"
@@ -107,7 +138,7 @@ def generate_fill_in_blank_questions(language: str, summary: str, num_questions:
     )
     raw = call_gemini(prompt)
     data = _load_json_response(raw)
-    return data or {
+    result = data or {
         "questions": [
             {
                 "sentence": "Je ___ au marché chaque dimanche.",
@@ -118,10 +149,18 @@ def generate_fill_in_blank_questions(language: str, summary: str, num_questions:
         ],
         "tip": "Focus on verb agreement in the present tense.",
     }
+    set_cache(ck, result)
+    return result
 
 
 def generate_matching_pairs(language: str, num_pairs: int = 4) -> Dict[str, List[Dict[str, str]]]:
     """Ask Gemini for vocab pairs for matching exercises."""
+    # Check cache first
+    ck = _cache_key("match", language, num_pairs)
+    cached = get_cached(ck)
+    if cached:
+        return cached
+
     prompt = (
         "Provide vocabulary flashcards for matching.\n"
         f"Language: {language}.\n"
@@ -138,6 +177,7 @@ def generate_matching_pairs(language: str, num_pairs: int = 4) -> Dict[str, List
                 {"target_word": "merci", "english_word": "thank you", "hint": "gratitude"},
             ]
         }
+    set_cache(ck, data)
     return data
 
 
@@ -145,6 +185,12 @@ def generate_grammar_questions(
     language: str, summary: str, num_questions: int = 6
 ) -> Dict[str, List[Dict[str, str]]]:
     """Ask Gemini for multiple-choice grammar questions."""
+    # Check cache first
+    ck = _cache_key("grammar", language, num_questions)
+    cached = get_cached(ck)
+    if cached:
+        return cached
+
     prompt = (
         "Create a grammar quiz for a language learner.\n"
         f"Language: {language}.\n"
@@ -159,7 +205,7 @@ def generate_grammar_questions(
     )
     raw = call_gemini(prompt)
     data = _load_json_response(raw)
-    return data or {
+    result = data or {
         "questions": [
             {
                 "question": "Which article is correct? ___ chat est noir.",
@@ -169,6 +215,8 @@ def generate_grammar_questions(
             }
         ],
     }
+    set_cache(ck, result)
+    return result
 
 
 def generate_language_reply(task: str, language: str, user_input: str, summary: str) -> Dict[str, str]:
