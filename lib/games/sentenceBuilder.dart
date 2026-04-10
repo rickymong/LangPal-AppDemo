@@ -1,305 +1,517 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 
-import 'package:langpal_prototype/userNotifier.dart';
-import 'gameTimer.dart';
+import '../userNotifier.dart';
+import '../services/sentence_builder_service.dart';
 
-class SentenceBuilder extends StatefulWidget{
-  const SentenceBuilder({Key? key, required this.xp}) : super(key:key);
+/// ──────────────────────────────────────────────────────────────────────────────
+/// SentenceBuilder – A timed fill-in-the-blank mini-game.
+///
+/// Questions are fetched from the Gemini-powered FastAPI backend via
+/// [SentenceBuilderService]. If the backend is unreachable or returns an error,
+/// the game gracefully falls back to a hardcoded question bank so the user can
+/// still play offline.
+///
+/// UI is intentionally mirrored from [SpeedVocab] for design consistency.
+/// ──────────────────────────────────────────────────────────────────────────────
+class SentenceBuilder extends StatefulWidget {
+  const SentenceBuilder({super.key, required this.xp});
+
   final int xp;
+
   @override
   State<SentenceBuilder> createState() => _SentenceBuilderState();
 }
 
-class _SentenceBuilderState extends State<SentenceBuilder>{
-  //Idea - query a series of sentences and options to make the game longer, have the timer move user to next question, each one correct adds to a score a streak.
-  //Ending with a streak if X or more provides bonus xp.
-  String sentence = "The boy likes to go on walks with his dog";
-  String blankWord = "walks";
-  int blankPosition = 6;
-  List<String> options = ["walks", "swims", "flights"];
-  late String blankSentence;
-  String? selectedWord;
+class _SentenceBuilderState extends State<SentenceBuilder> {
+  // ── Game Configuration ────────────────────────────────────────────────────
+  static const int _roundDurationSeconds = 45;
+  static const int _questionsPerRound = 5;
 
-  double seconds = 5;
-  bool timesUp = false;
-  bool winGame = false;
-  bool gameComplete = false; //a 1 time flag to avoid rerunning of win/loss condition results
+  final Random _random = Random();
+  Timer? _timer;
 
-  final AudioPlayer correctPlayer = AudioPlayer();
-  final AudioPlayer wrongPlayer = AudioPlayer();
-  
+  // ── Audio Players ─────────────────────────────────────────────────────────
+  final AudioPlayer _correctPlayer = AudioPlayer();
+  final AudioPlayer _wrongPlayer = AudioPlayer();
 
-  @override
-  void didUpdateWidget(SentenceBuilder oldWidget){
-    super.didUpdateWidget(oldWidget);
-    _checkTimeUp();
-  }
+  // ── Loading State ─────────────────────────────────────────────────────────
+  /// Whether the game is still fetching questions from the API.
+  bool _isLoading = true;
+  /// If the API call failed, this holds the error message for logging.
+  String? _loadError;
+
+  // ── Game Session State ────────────────────────────────────────────────────
+  /// Remaining seconds in this round.
+  int _timeLeft = _roundDurationSeconds;
+  /// Index of the current question being displayed.
+  int _questionIndex = 0;
+  /// Running count of correct answers.
+  int _correctAnswers = 0;
+  /// `true` once the round is finished (timeout or all questions answered).
+  bool _isFinished = false;
+  /// Locks input while showing green/red color feedback on the options.
+  bool _isRevealingFeedback = false;
+  /// The option string the user last tapped.
+  String? _selectedAnswer;
+
+  /// Questions loaded for this round (either from API or fallback).
+  List<_SentenceQuestion> _questions = [];
+
+  // ── Hardcoded Fallback Questions ──────────────────────────────────────────
+  /// Used when the backend is unreachable so the game can still be played.
+  static const List<_SentenceQuestionData> _sentenceBank = [
+    _SentenceQuestionData(
+      prompt: "The boy ___ to go on walks with his dog",
+      correctAnswer: "likes",
+      wrongAnswers: ["swims", "flights", "bakes"],
+    ),
+    _SentenceQuestionData(
+      prompt: "I need to ___ water to stay hydrated",
+      correctAnswer: "drink",
+      wrongAnswers: ["eat", "sleep", "run"],
+    ),
+    _SentenceQuestionData(
+      prompt: "She is going to the ___ to buy some bread",
+      correctAnswer: "store",
+      wrongAnswers: ["park", "school", "gym"],
+    ),
+    _SentenceQuestionData(
+      prompt: "They ___ a very good movie last night",
+      correctAnswer: "watched",
+      wrongAnswers: ["read", "listened", "wrote"],
+    ),
+    _SentenceQuestionData(
+      prompt: "My cat likes to ___ in the sun",
+      correctAnswer: "sleep",
+      wrongAnswers: ["bark", "fly", "drive"],
+    ),
+    _SentenceQuestionData(
+      prompt: "Please ___ the door when you leave",
+      correctAnswer: "close",
+      wrongAnswers: ["open", "paint", "break"],
+    ),
+  ];
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
-    //format the sentence
-    formatSentence();
     _preloadSounds();
+    _loadQuestions(); // Async – fetches from API then starts the game
   }
 
   @override
   void dispose() {
-    correctPlayer.dispose();
-    wrongPlayer.dispose();
+    _timer?.cancel();
+    _correctPlayer.dispose();
+    _wrongPlayer.dispose();
     super.dispose();
-
-  }
-  void formatSentence(){
-    List<String> words = sentence.split(" ");
-    words[blankPosition] = "___";
-    blankSentence = words.join(" ");
-    
-  }
-    void _preloadSounds() async {
-    await correctPlayer.setSource(AssetSource('audio/games/vocab_match_correct.wav'));
-    await wrongPlayer.setSource(AssetSource('audio/games/vocab_match_incorrect.wav'));
-
-    await correctPlayer.setReleaseMode(ReleaseMode.stop);
-    await wrongPlayer.setReleaseMode(ReleaseMode.stop);
   }
 
-  Color _getBorderColor(String word) {
-    if (selectedWord == word && word.toLowerCase() != blankWord.toLowerCase()){
-      return Colors.red; //mark red if wrong
-    } 
-    else if (selectedWord == blankWord && blankWord == word && winGame) return Colors.green; //mark green if correct
-    //else be grey (default)
-    return const Color(0xFFE5E5E5);
-  }
-  
+  // ── Audio ─────────────────────────────────────────────────────────────────
 
-  void _handleCardTap(String word){
-    if (gameComplete) return; //prevents changing answers once game is over
+  /// Preloads correct/incorrect audio so playback is instant on tap.
+  Future<void> _preloadSounds() async {
+    await _correctPlayer.setSource(AssetSource('audio/games/vocab_match_correct.wav'));
+    await _wrongPlayer.setSource(AssetSource('audio/games/vocab_match_incorrect.wav'));
+
+    await _correctPlayer.setReleaseMode(ReleaseMode.stop);
+    await _wrongPlayer.setReleaseMode(ReleaseMode.stop);
+  }
+
+  // ── Question Loading ──────────────────────────────────────────────────────
+
+  /// Attempts to fetch questions from the Gemini backend.
+  /// On failure, falls back to the hardcoded [_sentenceBank].
+  /// Once questions are ready, transitions from loading screen → game screen.
+  Future<void> _loadQuestions() async {
+    try {
+      // Try to get the current user's ID for personalized questions
+      final userNotifier = Provider.of<UserNotifier>(context, listen: false);
+      final userId = userNotifier.user?.id ?? 'guest';
+
+      // Call the backend API
+      final apiQuestions = await SentenceBuilderService.fetchQuestions(
+        userId: userId,
+        numQuestions: _questionsPerRound,
+      );
+
+      if (apiQuestions != null && apiQuestions.isNotEmpty) {
+        // Successfully got questions from Gemini – convert to internal model
+        _questions = apiQuestions.map((q) {
+          final options = List<String>.from(q.options)..shuffle(_random);
+          return _SentenceQuestion(
+            prompt: q.sentence,
+            correctAnswer: q.answer,
+            options: options,
+          );
+        }).toList();
+        print('[SentenceBuilder] Loaded ${_questions.length} questions from Gemini API');
+      } else {
+        // API returned empty – fall back
+        _loadError = 'API returned no questions';
+        _questions = _buildFallbackQuestions();
+        print('[SentenceBuilder] Using fallback questions (API empty)');
+      }
+    } catch (e) {
+      // Network error, timeout, etc. – fall back gracefully
+      _loadError = e.toString();
+      _questions = _buildFallbackQuestions();
+      print('[SentenceBuilder] Using fallback questions (error: $e)');
+    }
+
+    if (!mounted) return;
+
+    // Transition from loading → gameplay
+    setState(() {
+      _isLoading = false;
+    });
+    _startTimer();
+  }
+
+  /// Builds questions from the hardcoded bank (offline fallback).
+  List<_SentenceQuestion> _buildFallbackQuestions() {
+    final available = List<_SentenceQuestionData>.from(_sentenceBank)..shuffle(_random);
+    final selected = available.take(_questionsPerRound).toList();
+
+    return selected.map((data) {
+      final options = <String>[data.correctAnswer, ...data.wrongAnswers]..shuffle(_random);
+      return _SentenceQuestion(
+        prompt: data.prompt,
+        correctAnswer: data.correctAnswer,
+        options: options,
+      );
+    }).toList();
+  }
+
+  // ── Timer ─────────────────────────────────────────────────────────────────
+
+  /// Starts the countdown. Called after questions have loaded.
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _isFinished) return;
+
+      if (_timeLeft <= 1) {
+        setState(() {
+          _timeLeft = 0;
+        });
+        _finishGame();
+        return;
+      }
+
+      setState(() {
+        _timeLeft -= 1;
+      });
+    });
+  }
+
+  // ── Answer Handling ───────────────────────────────────────────────────────
+
+  /// Processes a tap on an answer option.
+  /// Plays audio, shows colored feedback for 700ms, then advances.
+  Future<void> _selectAnswer(String answer) async {
+    if (_isFinished || _isRevealingFeedback) return;
+
+    final currentQuestion = _questions[_questionIndex];
+    final isCorrect = answer == currentQuestion.correctAnswer;
+
+    // Audio feedback
+    if (isCorrect) {
+      _correctPlayer.seek(Duration.zero);
+      _correctPlayer.resume();
+      _correctAnswers += 1;
+    } else {
+      _wrongPlayer.seek(Duration.zero);
+      _wrongPlayer.resume();
+    }
+
+    // Show colored feedback
+    setState(() {
+      _selectedAnswer = answer;
+      _isRevealingFeedback = true;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 700));
+
+    if (!mounted || _isFinished) return;
+
+    // Advance or finish
+    if (_questionIndex >= _questions.length - 1) {
+      _finishGame();
+      return;
+    }
 
     setState(() {
-      selectedWord = word;
+      _questionIndex += 1;
+      _selectedAnswer = null;
+      _isRevealingFeedback = false;
     });
-    _checkMatch();
-  }
-  void _checkMatch(){
-    if (gameComplete) return; //prevent repeat win logic from running
-
-    bool isMatch = selectedWord!.toLowerCase() == blankWord.toLowerCase();
-    if(isMatch){
-     //correctPlayer.play(AssetSource('audio/games/vocab_match_correct.wav'));
-      correctPlayer.seek(Duration.zero);
-      correctPlayer.resume();
-     setState(() {
-       winGame = true;
-     });
-     _completeGame(result: true);
-    }
-    else{
-      wrongPlayer.seek(Duration.zero);
-      wrongPlayer.resume();
-    }
   }
 
-  void _completeGame({required bool result}){
-    if(gameComplete) return;
-    gameComplete = true;
-    print("game complete");
+  // ── Color Helpers ─────────────────────────────────────────────────────────
+
+  Color _getOptionBorderColor(String option, _SentenceQuestion question) {
+    if (!_isRevealingFeedback) return const Color(0xFFE5E5E5);
+    if (option == question.correctAnswer) return const Color(0xFF58CC02);
+    if (_selectedAnswer == option) return const Color(0xFFFF4B4B);
+    return const Color(0xFFE5E5E5);
+  }
+
+  Color _getOptionBackgroundColor(String option, _SentenceQuestion question) {
+    if (!_isRevealingFeedback) return Colors.white;
+    if (option == question.correctAnswer) return const Color(0xFFE7F5E0);
+    if (_selectedAnswer == option) return const Color(0xFFFFE8E8);
+    return Colors.white;
+  }
+
+  Color _getOptionTextColor(String option, _SentenceQuestion question) {
+    if (!_isRevealingFeedback) return Colors.black;
+    if (option == question.correctAnswer) return const Color(0xFF2E7D32);
+    if (_selectedAnswer == option) return const Color(0xFFC62828);
+    return Colors.black;
+  }
+
+  // ── Game Completion ───────────────────────────────────────────────────────
+
+  /// Stops the timer, calculates XP, awards it, and shows a results dialog.
+  void _finishGame() {
+    if (_isFinished) return;
+
+    setState(() {
+      _isFinished = true;
+    });
+    _timer?.cancel();
+
     final userNotifier = Provider.of<UserNotifier>(context, listen: false);
-    _showCompletionPopup(context, result);
-    if(result == true){
-      userNotifier.completeGame(widget.xp);
+    final accuracy = _correctAnswers / _questions.length;
+
+    // XP tiers: >=80% → full, >=40% → half, <40% → 0
+    final earnedXp = accuracy >= 0.8
+        ? widget.xp
+        : (accuracy >= 0.4 ? (widget.xp / 2).round() : 0);
+
+    if (earnedXp > 0) {
+      userNotifier.completeGame(earnedXp);
     }
-    Future.delayed(const Duration(seconds: 2), (){
-      if(context.mounted){
-        Navigator.pop(context);
-      }
-    });
-       //   if(context.mounted){
-       // Navigator.pop(context);
-     // }
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Round Complete'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Score: $_correctAnswers / ${_questions.length}'),
+              const SizedBox(height: 8),
+              Text('XP Earned: $earnedXp'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                if (mounted) {
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Done'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
-  void _checkTimeUp(){
-    if(gameComplete) return;
-    if(timesUp){
-      _completeGame(result: false);
-    }
-  }
+  // ── UI ─────────────────────────────────────────────────────────────────────
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final userNotifier = context.read<UserNotifier>(); // Get it here in build
-
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   if (selectedWord == blankWord) {
-    //     setState(() {
-    //       //winGame = false;
-    //       //selectedWord = null;
-    //     });
-    //     _showCompletionPopup(context, true);
-    //     userNotifier.completeGame(widget.xp);
-    //     // Future.delayed(const Duration(seconds: 2), () {
-    //     //   if (context.mounted) {
-    //     //     Navigator.pop(context);
-    //     //   }
-    //     // });
-    //   }
-    //   else if(timesUp == true){
-    //     _showCompletionPopup(context, false);
-    //     Future.delayed(const Duration(seconds: 2), (){
-    //       if(context.mounted){
-    //         Navigator.pop(context);
-    //       }
-    //     });
-    //   }
-    // });
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
+        elevation: 0,
         centerTitle: true,
         leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back, color: Colors.black)),
+        ),
         title: const Text(
-          "Sentence Builder",
-          style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600)
+          'Sentence Builder',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
-      body: Column(
+      body: _isLoading ? _buildLoadingScreen() : _buildGameScreen(screenWidth),
+    );
+  }
+
+  /// Loading screen shown while the API call is in-flight.
+  Widget _buildLoadingScreen() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Padding(
-            padding: EdgeInsets.symmetric(
-            vertical: screenHeight * 0.02,
-            horizontal: screenWidth * 0.05,
+          CircularProgressIndicator(
+            color: Color(0xFF58CC02),
+          ),
+          SizedBox(height: 20),
+          Text(
+            'Generating questions...',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey,
             ),
           ),
-          GameTimer(seconds: seconds, onFinish: () {
-                if(!mounted) return;
-                //_showCompletionPopup(context, false); //change to a local function that sets a local timer variable to finished - triggering the post frame callback
-                  if(winGame){
-                    setState(() {
-                      timesUp = true;
-                    });
-                  }
-                  
-                }),
+        ],
+      ),
+    );
+  }
+
+  /// The main gameplay UI — question counter, timer, prompt card, option buttons.
+  Widget _buildGameScreen(double screenWidth) {
+    final current = _questions[_questionIndex];
+
+    return Padding(
+      padding: EdgeInsets.all(screenWidth * 0.05),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── Header: Question counter + Timer pill ──────────────────────
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
+              Text(
+                'Q ${_questionIndex + 1}/${_questions.length}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: _timeLeft <= 10
+                      ? const Color(0xFFFFE8E8)
+                      : const Color(0xFFF0F0F0),
+                ),
                 child: Text(
-                  blankSentence,
-                  softWrap: true,
-                  textAlign: TextAlign.center,
+                  '$_timeLeft s',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  )
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: _timeLeft <= 10
+                        ? const Color(0xFFFF4B4B)
+                        : Colors.black,
+                  ),
                 ),
               ),
-              SizedBox(width: screenWidth * 0.10), 
             ],
           ),
-          SingleChildScrollView(
-            child: ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: options.length,
-              itemBuilder: (context, index){
-                final word = options[index];
-                return WordCard(word: word, screenHeight: screenHeight, screenWidth: screenWidth, borderColor: _getBorderColor(word), onTap: () => _handleCardTap(word));
-              },
-              )
-          )
-        ],
-        
-      ),
-    );
-  }
-  void _showCompletionPopup(BuildContext context, bool won) {
- // _hasShownCompletion = true; // Prevent showing multiple times
-  print("in popUp");
-  ScaffoldMessenger.of(context).showSnackBar(
-    
-    SnackBar(
-      content: won ? Text('Game completed! +${widget.xp} XP earned') : Text("Time's Up! Try Again!"),
-      backgroundColor: won ?  Color(0xFF58CC02) :  Colors.red,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.02),
-      ),
-      //duration: const Duration(seconds: 2),
-    ),
-  );
-}
+          const SizedBox(height: 24),
 
-}
-
-class WordCard extends StatelessWidget {
-  const WordCard({
-    super.key,
-    required this.word,
-    required this.screenHeight,
-    required this.screenWidth,
-    required this.borderColor,
-    // required this.isCorrect,
-    required this.onTap,
-  });
-
-  final String word;
-  final double screenHeight;
-  final double screenWidth;
-  final Color borderColor;
-//  final bool isCorrect; //if word has already been matched properly, alter color
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: screenHeight * 0.015),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(screenWidth * 0.04),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: EdgeInsets.symmetric(
-              vertical: screenHeight * 0.025,
-              horizontal: screenWidth * 0.04,
-            ),
+          // ── Sentence Prompt Card ───────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              // color: isCorrect 
-              //     ? const Color(0xFFF0F0F0) 
-              //     : const Color(0xFFF7F7F7),
-              borderRadius: BorderRadius.circular(screenWidth * 0.04),
-              border: Border.all(
-                color: borderColor,
-                width: 2.5,
-              ),
+              color: const Color(0xFFF7F7F7),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE5E5E5)),
             ),
-            child: Center(
-              child: Text(
-                word,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  // color: isCorrect 
-                  //     ? Colors.grey.shade500 
-                  //     : Colors.black87,
+            child: Column(
+              children: [
+                Text(
+                  'Fill in the blank',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 10),
+                Text(
+                  current.prompt,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                ),
+              ],
             ),
           ),
-        ),
+          const SizedBox(height: 20),
+
+          // ── Answer Options ────────────────────────────────────────────
+          ...current.options.map((option) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  side: BorderSide(
+                    color: _getOptionBorderColor(option, current),
+                    width: 1.5,
+                  ),
+                  backgroundColor: _getOptionBackgroundColor(option, current),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed:
+                    _isRevealingFeedback ? null : () => _selectAnswer(option),
+                child: Text(
+                  option,
+                  style: TextStyle(
+                    color: _getOptionTextColor(option, current),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
+}
+
+// ── Data Models ───────────────────────────────────────────────────────────────
+
+/// Static definition used in the hardcoded fallback bank.
+class _SentenceQuestionData {
+  const _SentenceQuestionData({
+    required this.prompt,
+    required this.correctAnswer,
+    required this.wrongAnswers,
+  });
+
+  final String prompt;
+  final String correctAnswer;
+  final List<String> wrongAnswers;
+}
+
+/// Runtime question used during gameplay.
+class _SentenceQuestion {
+  const _SentenceQuestion({
+    required this.prompt,
+    required this.correctAnswer,
+    required this.options,
+  });
+
+  final String prompt;
+  final String correctAnswer;
+  final List<String> options;
 }
