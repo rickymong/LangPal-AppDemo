@@ -139,7 +139,36 @@ def generate_matching_pairs(language: str, num_pairs: int = 4) -> Dict[str, List
             ]
         }
     return data
-    return sections
+
+
+def generate_grammar_questions(
+    language: str, summary: str, num_questions: int = 6
+) -> Dict[str, List[Dict[str, str]]]:
+    """Ask Gemini for multiple-choice grammar questions."""
+    prompt = (
+        "Create a grammar quiz for a language learner.\n"
+        f"Language: {language}.\n"
+        f"Generate {num_questions} multiple-choice questions testing grammar rules "
+        "(verb conjugation, articles, tenses, prepositions, etc.).\n"
+        "Each question should have exactly 4 options with one correct answer.\n"
+        "Respond ONLY in valid JSON with this shape:\n"
+        '{\n  "questions": [\n    {"question": "Which is correct?\\n...", '
+        '"options": ["a", "b", "c", "d"], "answer": "correct option", '
+        '"explanation": "short English explanation"}\n  ]\n}\n'
+        f"Context: {summary or 'Fresh session.'}"
+    )
+    raw = call_gemini(prompt)
+    data = _load_json_response(raw)
+    return data or {
+        "questions": [
+            {
+                "question": "Which article is correct? ___ chat est noir.",
+                "options": ["Le", "La", "Les", "Un"],
+                "answer": "Le",
+                "explanation": "'Chat' is masculine singular, so use 'Le'.",
+            }
+        ],
+    }
 
 
 def generate_language_reply(task: str, language: str, user_input: str, summary: str) -> Dict[str, str]:

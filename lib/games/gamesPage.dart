@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:langpal_prototype/games/dailyChallengeTracker.dart';
 import 'package:langpal_prototype/games/sentenceBuilder.dart';
 import 'package:langpal_prototype/games/speedVocab.dart';
+import 'package:langpal_prototype/games/grammarQuest.dart';
 import 'package:langpal_prototype/games/vocabMatcher.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
@@ -51,6 +52,7 @@ class _GamesPageState extends State<GamesPage> {
       difficulty: 'Hard',
       icon: Icons.edit_note,
       summary: 'Master grammar rules',
+      gamePage: GrammarQuest(xp: 40),
     ),
     Game(
       name: 'Listening Challenge',
