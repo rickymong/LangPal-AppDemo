@@ -126,34 +126,14 @@ def generate_language_reply(
     user_input: str,
     summary: str = "",
 ) -> dict:
-    """
-    Generate a tutor response via Gemini.
-
-    Returns a dict with keys:
-        target_text, english_text, tip, follow_up, chat_summary
-    Falls back to safe defaults if Gemini returns malformed output.
-    """
-    model = _get_gemini_model()
-
-    prompt = SYSTEM_PROMPT_TEMPLATE.format(
-        language=language,
-        summary=summary if summary else "(No previous conversation)",
-    )
-
-    full_prompt = f"{prompt}\n\nLearner said: \"{user_input}\"\nTask: {task}"
-
-    response = model.generate_content(
-        full_prompt,
-        generation_config=genai.types.GenerationConfig(
-            temperature=0.7,
-            max_output_tokens=500,
-        ),
-    )
-
-    raw_text = response.text.strip()
-
-
-    return _parse_gemini_response(raw_text, user_input, language)
+    """Demo mode: hardcoded response for demo."""
+    return {
+        "target_text": "Très bien! Vous parlez très bien le français.",
+        "english_text": "Very good! You speak French very well.",
+        "tip": "Use 'Très' (very) before adjectives to intensify them.",
+        "follow_up": "Quel est votre hobby préféré?",
+        "chat_summary": f"User said: {user_input}",
+    }
 
 
 def _parse_gemini_response(raw_text: str, user_input: str, language: str) -> dict:
