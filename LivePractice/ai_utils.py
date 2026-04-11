@@ -204,7 +204,7 @@ def synthesize_speech(text: str) -> bytes:
     """
     client = _get_eleven_client()
 
-    voice_id = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")  
+    voice_id = os.getenv("ELEVENLABS_VOICE_ID", "EXAVITQu4vr4xnSDxMaL")  
 
     audio_generator = client.text_to_speech.convert(
         voice_id=voice_id,
