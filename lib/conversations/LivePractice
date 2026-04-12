@@ -1,0 +1,301 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class LivePracticeScreen extends StatefulWidget {
+  const LivePracticeScreen({super.key});
+
+  @override
+  State<LivePracticeScreen> createState() => _LivePracticeScreenState();
+}
+
+class _LivePracticeScreenState extends State<LivePracticeScreen> {
+  bool isRecording = false;
+  bool isBeakOpen = false;
+  String currentTranscript = '';
+  String stateText = 'Ready to speak';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 255, 248, 233),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          color: Colors.black,
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.green[400],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Adam',
+                      style: GoogleFonts.nunito(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    Text(
+                      'Connected • 0:00',
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey[50] ?? Colors.white,
+              Colors.grey[100] ?? Colors.white,
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Mascot (placeholder - will be replaced with bird images)
+                      Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                isBeakOpen = !isBeakOpen;
+                              });
+                            },
+                            child: Container(
+                              width: 140,
+                              height: 140,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.blue[300],
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.blue.withOpacity(0.3),
+                                    blurRadius: 16,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Text(
+                                  isBeakOpen ? '🐦' : '🤖',
+                                  style: const TextStyle(fontSize: 80),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'AI Tutor',
+                            style: GoogleFonts.nunito(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 48),
+
+                      // Transcript area
+                      Container(
+                        width: MediaQuery.of(context).size.width - 48,
+                        constraints: const BoxConstraints(minHeight: 120),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(
+                            color: Colors.grey[300] ?? Colors.grey,
+                            width: 0.5,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: currentTranscript.isEmpty
+                              ? Text(
+                                  'Waiting for your message...',
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 14,
+                                    color: Colors.grey[500],
+                                  ),
+                                  textAlign: TextAlign.center,
+                                )
+                              : Text(
+                                  currentTranscript,
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // State indicator
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isRecording
+                              ? Colors.red[100]
+                              : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          stateText,
+                          style: GoogleFonts.nunito(
+                            fontSize: 12,
+                            color: isRecording
+                                ? Colors.red[700]
+                                : Colors.grey[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Controls at bottom
+            Padding(
+              padding: const EdgeInsets.only(bottom: 32.0),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Mic button
+                      GestureDetector(
+                        onLongPressStart: (_) {
+                          setState(() {
+                            isRecording = true;
+                            stateText = 'Recording...';
+                          });
+                        },
+                        onLongPressEnd: (_) {
+                          setState(() {
+                            isRecording = false;
+                            stateText = 'Processing...';
+                            // Demo: show transcript after recording
+                            currentTranscript =
+                                'Hello, this is a test.';
+                          });
+                        },
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isRecording
+                                ? Colors.blue[400]
+                                : Colors.white,
+                            border: Border.all(
+                              color: Colors.blue[400] ?? Colors.blue,
+                              width: 2,
+                            ),
+                            boxShadow: isRecording
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.blue.withOpacity(0.4),
+                                      blurRadius: 12,
+                                      spreadRadius: 2,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.mic,
+                              size: 32,
+                              color: isRecording
+                                  ? Colors.white
+                                  : Colors.blue[400],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+
+                      // End call button
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.red[400],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.withOpacity(0.3),
+                                blurRadius: 12,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.call_end,
+                              size: 32,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Hold to speak',
+                    style: GoogleFonts.nunito(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
