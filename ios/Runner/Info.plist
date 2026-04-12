@@ -58,5 +58,7 @@
 				</array>
 			</dict>
 		</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>LangPal needs microphone access to record your voice for language practice</string>
 </dict>
 </plist>
