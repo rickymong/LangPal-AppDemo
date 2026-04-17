@@ -136,9 +136,9 @@ def generate_fill_in_blank_questions(language: str, summary: str, num_questions:
     prompt = (
         "Create a fill-in-the-blank drill for a language learner.\n"
         f"Language: {language}.\n"
-        f"Give {num_questions} sentences. Replace one word with ___ and provide 3 answer choices.\n"
-        "Respond ONLY in valid JSON with this shape: \n"
-        "{\n  \"questions\": [\n    {\"sentence\": \"... ___ ...\", \"options\": [\"option\"], \"answer\": \"correct word\", \"explanation\": \"short English hint\"}\n  ],\n  \"tip\": \"short encouragement\"\n}\n"
+        f"Give {num_questions} completely unique sentences. Replace one word with ___ and provide 3 answer choices.\n"
+        "Respond ONLY in valid JSON with this exact shape: \n"
+        "{\n  \"questions\": [\n    {\"sentence\": \"<target_language_sentence>\", \"options\": [\"<wrong1>\", \"<correct>\", \"<wrong2>\"], \"answer\": \"<correct_word>\", \"explanation\": \"<short English hint>\"}\n  ],\n  \"tip\": \"<short encouragement>\"\n}\n"
         f"Context: {summary or 'Fresh session.'}"
     )
     raw = call_ai(prompt)
@@ -161,8 +161,9 @@ def generate_matching_pairs(language: str, num_pairs: int = 4) -> Dict[str, List
     prompt = (
         "Provide vocabulary flashcards for matching.\n"
         f"Language: {language}.\n"
+        "Generate completely unique words. Do not copy the placeholder text.\n"
         f"Return {num_pairs} distinct word pairs as JSON with format: \n"
-        "{\n  \"pairs\": [\n    {\"target_word\": \"bonjour\", \"english_word\": \"hello\", \"hint\": \"greeting\"}\n  ]\n}\n"
+        "{\n  \"pairs\": [\n    {\"target_word\": \"<word_in_target_language>\", \"english_word\": \"<english_translation>\", \"hint\": \"<short_hint>\"}\n  ]\n}\n"
         "Output JSON only. Keep hints short in English."
     )
     raw = call_ai(prompt)

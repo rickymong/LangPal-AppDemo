@@ -21,6 +21,7 @@ dependencies:
   supabase_flutter: ^2.3.0
   html: ^0.15.6
   audioplayers: ^6.1.0
+  http: ^1.2.0
 
 
 dev_dependencies:

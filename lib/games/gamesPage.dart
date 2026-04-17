@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/games/dailyChallengeTracker.dart';
 import 'package:langpal_prototype/games/vocabMatcher.dart';
+import 'package:langpal_prototype/games/wordlePage.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
 import '../types/games.dart';
@@ -23,6 +24,15 @@ class _GamesPageState extends State<GamesPage> {
       icon: Icons.extension,
       summary: 'Match words with translations',
       gamePage: VocabMatch(xp: 20) //decouple link from Game?
+    ),
+    Game(
+      name: 'Wordle',
+      xp: 50,
+      time: 5,
+      difficulty: 'Medium',
+      icon: Icons.grid_on,
+      summary: 'Guess the hidden 5-letter language word',
+      gamePage: const WordleGame(xp: 50)
     ),
     Game(
       name: 'Sentence Builder',
