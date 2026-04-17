@@ -13,15 +13,20 @@ import "userNotifier.dart";
 import "landingPage/landingPage.dart";
 
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables from .env
+  await dotenv.load(fileName: ".env");
   
   // Initialize Supabase
   await SupabaseService.initialize();
   
   runApp(ChangeNotifierProvider(
     create: (context) => UserNotifier(),
-    child: MyApp()
+    child: const MyApp()
   ));
 }
 

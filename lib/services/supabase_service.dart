@@ -3,6 +3,8 @@ import '../types/user.dart' as app_user;
 import '../types/aiPartner.dart';
 import '../types/chatMessage.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 /// Supabase configuration and service layer for LangPal
 class SupabaseService {
   static SupabaseClient get client => Supabase.instance.client;
@@ -10,14 +12,8 @@ class SupabaseService {
   /// Initialize Supabase - call this in main() before runApp()
   static Future<void> initialize() async {
     await Supabase.initialize(
-      url: const String.fromEnvironment(
-        'https://txnuqxgkegnrekwmmvgx.supabase.co/',
-        defaultValue: 'https://txnuqxgkegnrekwmmvgx.supabase.co/',
-      ),
-      anonKey: const String.fromEnvironment(
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bnVxeGdrZWducmVrd21tdmd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNzE1MzcsImV4cCI6MjA4MjY0NzUzN30.1JUYiqCoi7EkZo2EJWY2EbfzWLswbq8q3Tf68if8ydk',
-        defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bnVxeGdrZWducmVrd21tdmd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNzE1MzcsImV4cCI6MjA4MjY0NzUzN30.1JUYiqCoi7EkZo2EJWY2EbfzWLswbq8q3Tf68if8ydk',
-      ),
+      url: dotenv.env['SUPABASE_URL'] ?? '',
+      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
     );
   }
 
