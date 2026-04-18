@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/games/dailyChallengeTracker.dart';
 import 'package:langpal_prototype/games/sentenceBuilder.dart';
+import 'package:langpal_prototype/games/speedVocab.dart';
+import 'package:langpal_prototype/games/grammarQuest.dart';
 import 'package:langpal_prototype/games/vocabMatcher.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
 import '../types/games.dart';
+import '../services/sentence_builder_service.dart';
+import '../services/speed_vocab_service.dart';
+import '../services/grammar_quest_service.dart';
 
 class GamesPage extends StatefulWidget {
   const GamesPage({Key? key}) : super(key: key);
@@ -14,6 +19,20 @@ class GamesPage extends StatefulWidget {
 }
 
 class _GamesPageState extends State<GamesPage> {
+  // Prefetch game data when the games page opens
+  @override
+  void initState() {
+    super.initState();
+    _prefetchGameData();
+  }
+
+  void _prefetchGameData() {
+    final userId = Provider.of<UserNotifier>(context, listen: false).user?.id ?? 'guest';
+    SentenceBuilderService.fetchQuestions(userId: userId);
+    SpeedVocabService.fetchVocabPairs(userId: userId);
+    GrammarQuestService.fetchQuestions(userId: userId);
+  }
+
   // Sample games data
   final List<Game> games = [
     Game(
@@ -41,6 +60,7 @@ class _GamesPageState extends State<GamesPage> {
       difficulty: 'Easy',
       icon: Icons.bolt,
       summary: 'Quick vocabulary challenges',
+      gamePage: SpeedVocab(xp: 15),
     ),
     Game(
       name: 'Grammar Quest',
@@ -49,6 +69,7 @@ class _GamesPageState extends State<GamesPage> {
       difficulty: 'Hard',
       icon: Icons.edit_note,
       summary: 'Master grammar rules',
+      gamePage: GrammarQuest(xp: 40),
     ),
     Game(
       name: 'Listening Challenge',
