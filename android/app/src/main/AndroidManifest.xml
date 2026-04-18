@@ -2,7 +2,12 @@
     <application
         android:label="LangPal"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon">
+        android:icon="@mipmap/launcher_icon"
+        ```xml
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<uses-permission android:name="android.permission.INTERNET" />
+```>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
