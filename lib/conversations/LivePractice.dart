@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'record_service.dart';
-import 'conversation_service.dart';
+import 'package:langpal_prototype/services/conversation_service.dart';
+import 'package:langpal_prototype/services/record_service.dart';
 
 class LivePracticeScreen extends StatefulWidget {
   const LivePracticeScreen({super.key});
