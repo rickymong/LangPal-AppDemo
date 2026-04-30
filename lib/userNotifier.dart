@@ -18,10 +18,10 @@ class UserNotifier extends ChangeNotifier{
   User.User? get user => _user;
 
   //Profile stats (queried frm DB)
-  int _dayStreak = 7;
+  final int _dayStreak = 7;
   int _totalXP = 1250;
   int _currentDailyXP = 10;
-  int _dailyGoal = 50;
+  final int _dailyGoal = 50;
 
   int _gamesCompletedToday = 0;
   bool _dailyChallengeComplete = false;
@@ -252,10 +252,8 @@ Future<void> _checkInitialState() async {
     print("In notifier signin");
     try {
       final response = await SupabaseService.signIn(email: email, password: password);
-      if(response != null){
-        print("response in sign in not null");
-      }
-      await loadUserData();
+      print("response in sign in not null");
+          await loadUserData();
       return true;
     } catch (e) {
       _error = e.toString();

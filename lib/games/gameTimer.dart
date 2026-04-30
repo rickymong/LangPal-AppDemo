@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class GameTimer extends StatefulWidget{
-  const GameTimer({Key? key, required this.seconds, this.onFinish}) : super(key:key);
+  const GameTimer({super.key, required this.seconds, this.onFinish});
   final double seconds;
   final VoidCallback? onFinish;
   @override

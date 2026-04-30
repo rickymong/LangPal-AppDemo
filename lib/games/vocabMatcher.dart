@@ -9,7 +9,7 @@ import 'package:audioplayers/audioplayers.dart';
 import '../types/games.dart';
 
 class VocabMatch extends StatefulWidget{
-  const VocabMatch({Key? key, required this.xp}) : super(key:key);
+  const VocabMatch({super.key, required this.xp});
 //Game game, double screenWidth, double screenHeight
   final int xp;
   

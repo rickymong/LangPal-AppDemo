@@ -13,7 +13,7 @@ class MessageService {
   final StreamController<ChatMessage> _messageController = StreamController<ChatMessage>.broadcast();
   
   Stream<ChatMessage> get messageStream => _messageController.stream;
-  List<List<String>> _messages = [];
+  final List<List<String>> _messages = [];
   void sendMessage(ChatMessage message) {
           if(message.isFromUser == true){
         _messages.add(["user", message.text]);

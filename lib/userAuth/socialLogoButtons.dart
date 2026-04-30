@@ -1,11 +1,6 @@
-import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:langpal_prototype/homeWidgets/homePage.dart';
-import 'package:langpal_prototype/userNotifier.dart';
-import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 
 

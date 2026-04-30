@@ -7,6 +7,8 @@ import '../userNotifier.dart';
 
 class LoadingScreen extends StatefulWidget {
   static String id = 'loading_screen';
+
+  const LoadingScreen({super.key});
   @override
   _LoadingScreenState createState() => _LoadingScreenState();
 }

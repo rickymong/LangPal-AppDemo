@@ -8,13 +8,13 @@ class ProgressBar extends StatelessWidget {
   final BorderRadius? borderRadius;
 
   const ProgressBar({
-    Key? key,
+    super.key,
     required this.progress,
     this.backgroundColor = const Color(0xFFE5E5E5),
     this.progressColor = const Color(0xFF58CC02),
     this.height = 8.0,
     this.borderRadius,
-  }) : super(key: key);
+  });
 
 @override
 Widget build(BuildContext context) {

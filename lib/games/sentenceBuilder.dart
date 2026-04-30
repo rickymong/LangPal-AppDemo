@@ -6,7 +6,7 @@ import 'package:langpal_prototype/userNotifier.dart';
 import 'gameTimer.dart';
 
 class SentenceBuilder extends StatefulWidget{
-  const SentenceBuilder({Key? key, required this.xp}) : super(key:key);
+  const SentenceBuilder({super.key, required this.xp});
   final int xp;
   @override
   State<SentenceBuilder> createState() => _SentenceBuilderState();

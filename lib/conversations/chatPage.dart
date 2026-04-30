@@ -18,7 +18,7 @@ class ChatPage extends StatefulWidget{
 
   final AiPartner aiPartner;
 
-  ChatPage({Key? key, required this.aiPartner}) : super(key: key);
+  const ChatPage({super.key, required this.aiPartner});
   @override
   State<ChatPage> createState() => _ChatPage();
 
