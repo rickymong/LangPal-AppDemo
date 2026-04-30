@@ -58,10 +58,6 @@ class SupabaseService {
       email: email,
       password: password,
     );
-    if(response == null){
-      print("NULL SIGNINWITHPASSWORD RESPONSE");
-      print(response.toString());
-    }
     return response;
   }
 
@@ -82,8 +78,7 @@ class SupabaseService {
 
 
   final GoogleSignIn signIn = GoogleSignIn.instance;
-  unawaited(
-    signIn.initialize(clientId: iosClientId, serverClientId: webClientId));
+  await signIn.initialize(clientId: iosClientId, serverClientId: webClientId);
 
   // Perform the sign in
   final googleAccount = await signIn.authenticate();

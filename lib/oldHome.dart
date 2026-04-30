@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:langpal_prototype/conversations/conversations.dart';
 import 'package:langpal_prototype/navigator.dart';
-import 'package:langpal_prototype/profile/profile.dart';
 import 'package:langpal_prototype/types/aiPartner.dart';
 import 'package:provider/provider.dart';
 import 'types/user.dart';

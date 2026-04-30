@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/landingPage/landingPage.dart';
 import 'package:langpal_prototype/profile/languageSelector.dart';
-import 'package:langpal_prototype/types/aiPartner.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../types/user.dart';
 import '../userNotifier.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';

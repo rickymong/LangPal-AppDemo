@@ -21,7 +21,7 @@ class _LanguageSelectorState extends State<LanguageSelector> {
   ];
 
   // User’s selected languages
-  List<String> _selectedLanguages = ["English"]; //default language (can be changed or perhaps selected at sign up)
+  final List<String> _selectedLanguages = ["English"]; //default language (can be changed or perhaps selected at sign up)
 
   void _openLanguagePicker() async {
     // Show a modal bottom sheet with checkboxes

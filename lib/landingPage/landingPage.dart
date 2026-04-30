@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/userAuth/accountSetup.dart/firstLangSelect.dart';
 import '../userAuth/login/loginPage.dart';
-import '../userAuth/accountSetup.dart/signupPage.dart';
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
 
@@ -44,14 +43,15 @@ class _LandingPageState extends State<LandingPage>
     return Scaffold(
       backgroundColor: Color.fromARGB(255, 255, 255, 255), //add logic for darkmode
       body: SafeArea(
-        child: Center( //wrap with scrollview?
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: screenWidth > 600 ? 600 : screenWidth
-              ),
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(24, 12, 24, 12),
-              child: Column(
+        child: SingleChildScrollView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: screenWidth > 600 ? 600 : screenWidth
+                ),
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(24, 12, 24, 12),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   //SizedBox(height: screenHeight * 0.02),
@@ -202,6 +202,7 @@ class _LandingPageState extends State<LandingPage>
               ),
             ),
           ),
+        ),
         ),
       ),
     );

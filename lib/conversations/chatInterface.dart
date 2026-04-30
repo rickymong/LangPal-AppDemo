@@ -66,7 +66,7 @@ class MessageBubble extends StatelessWidget { //message UI
 
 class ChatInput extends StatefulWidget { //Input box for chat
   final AiPartner aiPartner; //Tracks what AI the user is talking with
-  const ChatInput({Key? key, required this.aiPartner}) : super(key: key);
+  const ChatInput({super.key, required this.aiPartner});
   
 
   @override
@@ -81,7 +81,8 @@ class _ChatInputState extends State<ChatInput> {
     super.initState();
   
   }
-Widget build(BuildContext context) {
+@override
+  Widget build(BuildContext context) {
   final screenWidth = MediaQuery.of(context).size.width;
   User user = context.watch<UserNotifier>().user!;
   

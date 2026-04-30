@@ -230,13 +230,20 @@ class _SignUpPageState extends State<SignUpPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'Already have an account? ',
-                        style: TextStyle(
-                          color: Colors.grey[600],
+                      Flexible(
+                        child: Text(
+                          'Already have an account? ',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                          ),
                         ),
                       ),
                       TextButton(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                         onPressed: () {
                            Navigator.push(
                             context,

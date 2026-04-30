@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import '../types/games.dart';
 
 class GamesPage extends StatefulWidget {
-  const GamesPage({Key? key}) : super(key: key);
+  const GamesPage({super.key});
 
   @override
   State<GamesPage> createState() => _GamesPageState();

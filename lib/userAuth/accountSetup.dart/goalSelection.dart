@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:langpal_prototype/landingPage/landingPage.dart';
 import 'package:langpal_prototype/userAuth/accountSetup.dart/signupPage.dart';
 
 class GoalPage extends StatefulWidget {
-  GoalPage({
+  const GoalPage({
     super.key,
   });
 

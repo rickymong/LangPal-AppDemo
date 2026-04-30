@@ -10,7 +10,7 @@ import 'progressBar.dart';
 
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -116,7 +116,7 @@ Widget build(BuildContext context) {
           onTap: () => {
             Navigator.push(context, MaterialPageRoute(builder: (context) => Profile()))
           },
-          child: Container(
+          child: SizedBox(
             width: 70,
             height: 70,
             // decoration: BoxDecoration(
@@ -141,27 +141,30 @@ Widget build(BuildContext context) {
           ),
         ),
         const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Good morning!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: _isDarkMode ? Colors.white : Colors.black,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Good morning!',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: _isDarkMode ? Colors.white : Colors.black,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            Text(
-              'Keep up the great work',
-              style: TextStyle(
-                fontSize: 14,
-                color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              Text(
+                'Keep up the great work',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        const Spacer(),
         // Dark mode toggle
         IconButton(
           icon: Icon(
