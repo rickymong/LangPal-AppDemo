@@ -3,44 +3,39 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:audioplayers/audioplayers.dart';
 
 import '../userNotifier.dart';
-import '../services/sentence_builder_service.dart';
+import '../services/speed_vocab_service.dart';
 
 /// ──────────────────────────────────────────────────────────────────────────────
-/// SentenceBuilder – A timed fill-in-the-blank mini-game.
+/// SpeedVocab – A timed vocabulary quiz mini-game.
 ///
 /// Questions are fetched from the Gemini-powered FastAPI backend via
-/// [SentenceBuilderService]. If the backend is unreachable or returns an error,
-/// the game gracefully falls back to a hardcoded question bank so the user can
-/// still play offline.
+/// [SpeedVocabService] which calls `/games/matching/start`. The backend
+/// generates vocab pairs personalized to the user's target language.
 ///
-/// UI is intentionally mirrored from [SpeedVocab] for design consistency.
+/// If the backend is unreachable, the game gracefully falls back to a
+/// hardcoded Spanish vocab bank so the user can still play offline.
 /// ──────────────────────────────────────────────────────────────────────────────
-class SentenceBuilder extends StatefulWidget {
-  const SentenceBuilder({super.key, required this.xp});
+class SpeedVocab extends StatefulWidget {
+  const SpeedVocab({super.key, required this.xp});
 
   final int xp;
 
   @override
-  State<SentenceBuilder> createState() => _SentenceBuilderState();
+  State<SpeedVocab> createState() => _SpeedVocabState();
 }
 
-class _SentenceBuilderState extends State<SentenceBuilder> {
+class _SpeedVocabState extends State<SpeedVocab> {
   // ── Game Configuration ────────────────────────────────────────────────────
   static const int _roundDurationSeconds = 45;
-  static const int _questionsPerRound = 5;
+  static const int _questionsPerRound = 8;
 
   final Random _random = Random();
   Timer? _timer;
 
-  // ── Audio Players ─────────────────────────────────────────────────────────
-  final AudioPlayer _correctPlayer = AudioPlayer();
-  final AudioPlayer _wrongPlayer = AudioPlayer();
-
   // ── Loading State ─────────────────────────────────────────────────────────
-  /// Whether the game is still fetching questions from the API.
+  /// Whether the game is still fetching vocab from the API.
   bool _isLoading = true;
   /// If the API call failed, this holds the error message for logging.
   String? _loadError;
@@ -60,110 +55,91 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
   String? _selectedAnswer;
 
   /// Questions loaded for this round (either from API or fallback).
-  List<_SentenceQuestion> _questions = [];
+  List<_SpeedQuestion> _questions = [];
 
-  // ── Hardcoded Fallback Questions ──────────────────────────────────────────
+  // ── Hardcoded Fallback Vocab ──────────────────────────────────────────────
   /// Used when the backend is unreachable so the game can still be played.
-  static const List<_SentenceQuestionData> _sentenceBank = [
-    _SentenceQuestionData(
-      prompt: "The boy ___ to go on walks with his dog",
-      correctAnswer: "likes",
-      wrongAnswers: ["swims", "flights", "bakes"],
-    ),
-    _SentenceQuestionData(
-      prompt: "I need to ___ water to stay hydrated",
-      correctAnswer: "drink",
-      wrongAnswers: ["eat", "sleep", "run"],
-    ),
-    _SentenceQuestionData(
-      prompt: "She is going to the ___ to buy some bread",
-      correctAnswer: "store",
-      wrongAnswers: ["park", "school", "gym"],
-    ),
-    _SentenceQuestionData(
-      prompt: "They ___ a very good movie last night",
-      correctAnswer: "watched",
-      wrongAnswers: ["read", "listened", "wrote"],
-    ),
-    _SentenceQuestionData(
-      prompt: "My cat likes to ___ in the sun",
-      correctAnswer: "sleep",
-      wrongAnswers: ["bark", "fly", "drive"],
-    ),
-    _SentenceQuestionData(
-      prompt: "Please ___ the door when you leave",
-      correctAnswer: "close",
-      wrongAnswers: ["open", "paint", "break"],
-    ),
-  ];
+  static const Map<String, String> _vocabBank = {
+    'hola': 'hello',
+    'adios': 'goodbye',
+    'gracias': 'thank you',
+    'por favor': 'please',
+    'agua': 'water',
+    'comida': 'food',
+    'casa': 'house',
+    'escuela': 'school',
+    'libro': 'book',
+    'amigo': 'friend',
+    'familia': 'family',
+    'trabajo': 'work',
+  };
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
-    _preloadSounds();
     _loadQuestions(); // Async – fetches from API then starts the game
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    _correctPlayer.dispose();
-    _wrongPlayer.dispose();
     super.dispose();
-  }
-
-  // ── Audio ─────────────────────────────────────────────────────────────────
-
-  /// Preloads correct/incorrect audio so playback is instant on tap.
-  Future<void> _preloadSounds() async {
-    await _correctPlayer.setSource(AssetSource('audio/games/vocab_match_correct.wav'));
-    await _wrongPlayer.setSource(AssetSource('audio/games/vocab_match_incorrect.wav'));
-
-    await _correctPlayer.setReleaseMode(ReleaseMode.stop);
-    await _wrongPlayer.setReleaseMode(ReleaseMode.stop);
   }
 
   // ── Question Loading ──────────────────────────────────────────────────────
 
-  /// Attempts to fetch questions from the Gemini backend.
-  /// On failure, falls back to the hardcoded [_sentenceBank].
+  /// Attempts to fetch vocab pairs from the Gemini backend.
+  /// On failure, falls back to the hardcoded [_vocabBank].
   /// Once questions are ready, transitions from loading screen → game screen.
   Future<void> _loadQuestions() async {
     try {
-      // Try to get the current user's ID for personalized questions
+      // Try to get the current user's ID for personalized vocab
       final userNotifier = Provider.of<UserNotifier>(context, listen: false);
       final userId = userNotifier.user?.id ?? 'guest';
 
       // Call the backend API
-      final apiQuestions = await SentenceBuilderService.fetchQuestions(
+      final apiPairs = await SpeedVocabService.fetchVocabPairs(
         userId: userId,
-        numQuestions: _questionsPerRound,
+        numPairs: _questionsPerRound,
       );
 
-      if (apiQuestions != null && apiQuestions.isNotEmpty) {
-        // Successfully got questions from Gemini – convert to internal model
-        _questions = apiQuestions.map((q) {
-          final options = List<String>.from(q.options)..shuffle(_random);
-          return _SentenceQuestion(
-            prompt: q.sentence,
-            correctAnswer: q.answer,
+      if (apiPairs != null && apiPairs.isNotEmpty) {
+        // Successfully got vocab from Gemini – build questions
+        // Collect all English translations for generating wrong options
+        final allEnglish = apiPairs.map((p) => p.englishWord).toList();
+
+        _questions = apiPairs.map((pair) {
+          final wrongAnswers = allEnglish
+              .where((e) => e != pair.englishWord)
+              .toList()
+            ..shuffle(_random);
+
+          final options = <String>[
+            pair.englishWord,
+            ...wrongAnswers.take(3),
+          ]..shuffle(_random);
+
+          return _SpeedQuestion(
+            prompt: pair.targetWord,
+            correctAnswer: pair.englishWord,
             options: options,
           );
         }).toList();
-        print('[SentenceBuilder] Loaded ${_questions.length} questions from Gemini API');
+
+        print('[SpeedVocab] Loaded ${_questions.length} questions from Gemini API');
       } else {
         // API returned empty – fall back
-        _loadError = 'API returned no questions';
+        _loadError = 'API returned no pairs';
         _questions = _buildFallbackQuestions();
-        print('[SentenceBuilder] Using fallback questions (API empty)');
+        print('[SpeedVocab] Using fallback questions (API empty)');
       }
     } catch (e) {
       // Network error, timeout, etc. – fall back gracefully
       _loadError = e.toString();
       _questions = _buildFallbackQuestions();
-      print('[SentenceBuilder] Using fallback questions (error: $e)');
+      print('[SpeedVocab] Using fallback questions (error: $e)');
     }
 
     if (!mounted) return;
@@ -175,16 +151,24 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
     _startTimer();
   }
 
-  /// Builds questions from the hardcoded bank (offline fallback).
-  List<_SentenceQuestion> _buildFallbackQuestions() {
-    final available = List<_SentenceQuestionData>.from(_sentenceBank)..shuffle(_random);
-    final selected = available.take(_questionsPerRound).toList();
+  /// Builds questions from the hardcoded vocab bank (offline fallback).
+  List<_SpeedQuestion> _buildFallbackQuestions() {
+    final entries = _vocabBank.entries.toList()..shuffle(_random);
+    final selected = entries.take(_questionsPerRound).toList();
+    final allEnglish = _vocabBank.values.toList();
 
-    return selected.map((data) {
-      final options = <String>[data.correctAnswer, ...data.wrongAnswers]..shuffle(_random);
-      return _SentenceQuestion(
-        prompt: data.prompt,
-        correctAnswer: data.correctAnswer,
+    return selected.map((entry) {
+      final wrongAnswers = allEnglish
+          .where((value) => value != entry.value)
+          .toList()
+        ..shuffle(_random);
+
+      final options = <String>[entry.value, ...wrongAnswers.take(3)]
+        ..shuffle(_random);
+
+      return _SpeedQuestion(
+        prompt: entry.key,
+        correctAnswer: entry.value,
         options: options,
       );
     }).toList();
@@ -214,34 +198,27 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
   // ── Answer Handling ───────────────────────────────────────────────────────
 
   /// Processes a tap on an answer option.
-  /// Plays audio, shows colored feedback for 700ms, then advances.
+  /// Shows colored feedback for 700ms, then advances.
   Future<void> _selectAnswer(String answer) async {
     if (_isFinished || _isRevealingFeedback) return;
 
     final currentQuestion = _questions[_questionIndex];
     final isCorrect = answer == currentQuestion.correctAnswer;
 
-    // Audio feedback
-    if (isCorrect) {
-      _correctPlayer.seek(Duration.zero);
-      _correctPlayer.resume();
-      _correctAnswers += 1;
-    } else {
-      _wrongPlayer.seek(Duration.zero);
-      _wrongPlayer.resume();
-    }
-
-    // Show colored feedback
     setState(() {
       _selectedAnswer = answer;
       _isRevealingFeedback = true;
     });
 
+    if (isCorrect) {
+      _correctAnswers += 1;
+    }
+
+    // Briefly show feedback colors before moving to the next question.
     await Future.delayed(const Duration(milliseconds: 700));
 
     if (!mounted || _isFinished) return;
 
-    // Advance or finish
     if (_questionIndex >= _questions.length - 1) {
       _finishGame();
       return;
@@ -256,25 +233,22 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
 
   // ── Color Helpers ─────────────────────────────────────────────────────────
 
-  Color _getOptionBorderColor(String option, _SentenceQuestion question) {
+  Color _getOptionBorderColor(String option, _SpeedQuestion question) {
     if (!_isRevealingFeedback) return const Color(0xFFE5E5E5);
     if (option == question.correctAnswer) return const Color(0xFF58CC02);
-    if (_selectedAnswer == option) return const Color(0xFFFF4B4B);
-    return const Color(0xFFE5E5E5);
+    return const Color(0xFFFF4B4B);
   }
 
-  Color _getOptionBackgroundColor(String option, _SentenceQuestion question) {
+  Color _getOptionBackgroundColor(String option, _SpeedQuestion question) {
     if (!_isRevealingFeedback) return Colors.white;
     if (option == question.correctAnswer) return const Color(0xFFE7F5E0);
-    if (_selectedAnswer == option) return const Color(0xFFFFE8E8);
-    return Colors.white;
+    return const Color(0xFFFFE8E8);
   }
 
-  Color _getOptionTextColor(String option, _SentenceQuestion question) {
+  Color _getOptionTextColor(String option, _SpeedQuestion question) {
     if (!_isRevealingFeedback) return Colors.black;
     if (option == question.correctAnswer) return const Color(0xFF2E7D32);
-    if (_selectedAnswer == option) return const Color(0xFFC62828);
-    return Colors.black;
+    return const Color(0xFFC62828);
   }
 
   // ── Game Completion ───────────────────────────────────────────────────────
@@ -283,16 +257,14 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
   void _finishGame() {
     if (_isFinished) return;
 
-    setState(() {
-      _isFinished = true;
-    });
+    _isFinished = true;
     _timer?.cancel();
 
     final userNotifier = Provider.of<UserNotifier>(context, listen: false);
     final accuracy = _correctAnswers / _questions.length;
 
-    // XP tiers: >=80% → full, >=40% → half, <40% → 0
-    final earnedXp = accuracy >= 0.8
+    // Reward full XP for strong performance, partial XP otherwise.
+    final earnedXp = accuracy >= 0.7
         ? widget.xp
         : (accuracy >= 0.4 ? (widget.xp / 2).round() : 0);
 
@@ -348,7 +320,7 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Sentence Builder',
+          'Speed Vocab',
           style: TextStyle(
             color: Colors.black,
             fontSize: 18,
@@ -367,11 +339,11 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircularProgressIndicator(
-            color: Color(0xFF58CC02),
+            color: Color(0xFF1CB0F6),
           ),
           SizedBox(height: 20),
           Text(
-            'Generating questions...',
+            'Loading vocabulary...',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -423,7 +395,7 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
           ),
           const SizedBox(height: 24),
 
-          // ── Sentence Prompt Card ───────────────────────────────────────
+          // ── Vocab Prompt Card ──────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -434,7 +406,7 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
             child: Column(
               children: [
                 Text(
-                  'Fill in the blank',
+                  'What does this mean?',
                   style: TextStyle(
                     color: Colors.grey[700],
                     fontSize: 14,
@@ -445,7 +417,7 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
                 Text(
                   current.prompt,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -488,30 +460,20 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
   }
 }
 
-// ── Data Models ───────────────────────────────────────────────────────────────
-
-/// Static definition used in the hardcoded fallback bank.
-class _SentenceQuestionData {
-  const _SentenceQuestionData({
-    required this.prompt,
-    required this.correctAnswer,
-    required this.wrongAnswers,
-  });
-
-  final String prompt;
-  final String correctAnswer;
-  final List<String> wrongAnswers;
-}
+// ── Data Model ────────────────────────────────────────────────────────────────
 
 /// Runtime question used during gameplay.
-class _SentenceQuestion {
-  const _SentenceQuestion({
+class _SpeedQuestion {
+  const _SpeedQuestion({
     required this.prompt,
     required this.correctAnswer,
     required this.options,
   });
 
+  /// The word in the target language.
   final String prompt;
+  /// The correct English translation.
   final String correctAnswer;
+  /// All selectable options (includes correct answer, shuffled).
   final List<String> options;
 }
