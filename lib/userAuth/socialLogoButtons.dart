@@ -18,7 +18,7 @@ class _SocialLogoButtonsState extends State<SocialLogoButtons> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final imageSize = screenWidth * 0.12; // Each image takes ~12% of screen width
+    final imageSize = screenWidth * 0.09; // Each image takes ~9% of screen width
     
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -43,10 +43,10 @@ class _SocialLogoButtonsState extends State<SocialLogoButtons> {
               }
           },
           child: Image.asset(
-            'assets/social_logos/icons8-gmail-50-3.png',
+            'assets/social_logos/google_logo.png',
             width: imageSize,
             height: imageSize,
-            fit: BoxFit.cover,
+            fit: BoxFit.contain,
           ),
         ),
       ],
