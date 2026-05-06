@@ -15,24 +15,24 @@ dependencies:
   country_flags: ^1.0.0
   cupertino_icons: ^1.0.8
   provider: ^6.1.5+1
-  intl: ^0.19.0
+  intl: ^0.20.2
   google_fonts: ^8.0.2
   image_picker: ^1.1.1
   supabase_flutter: ^2.3.0
   html: ^0.15.6
   audioplayers: ^6.1.0
-  flutter_dotenv: ^5.1.0
+  flutter_dotenv: ^6.0.1
   google_sign_in: ^7.1.1
   marquee: ^2.2.3
   http: ^1.2.0
-  record: ^5.0.0
+  record: ^6.2.0
 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: ^0.9.1
-  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.11.0
+  flutter_lints: ^6.0.0
   flutter_app_name: ^0.1.1
   xml: ^5.1.2
 
