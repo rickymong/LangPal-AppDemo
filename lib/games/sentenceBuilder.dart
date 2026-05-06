@@ -423,65 +423,96 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
           ),
           const SizedBox(height: 24),
 
-          // ── Sentence Prompt Card ───────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE5E5E5)),
-            ),
+          // ── Animated Question Section (prompt + options) ────────────────
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 260),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) {
+              final slide = Tween<Offset>(
+                begin: const Offset(0.15, 0),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(position: slide, child: child),
+              );
+            },
             child: Column(
+              key: ValueKey<int>(_questionIndex),
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Fill in the blank',
-                  style: TextStyle(
-                    color: Colors.grey[700],
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                // ── Sentence Prompt Card ───────────────────────────────
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7F7F7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE5E5E5)),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Fill in the blank',
+                        style: TextStyle(
+                          color: Colors.grey[700],
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        current.prompt,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  current.prompt,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-                ),
+                const SizedBox(height: 20),
+
+                // ── Answer Options (slide group only, no shake) ─────────
+                ...current.options.map((option) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOut,
+                      decoration: BoxDecoration(
+                        color: _getOptionBackgroundColor(option, current),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _getOptionBorderColor(option, current),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: _isRevealingFeedback ? null : () => _selectAnswer(option),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                option,
+                                style: TextStyle(
+                                  color: _getOptionTextColor(option, current),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
-          const SizedBox(height: 20),
-
-          // ── Answer Options ────────────────────────────────────────────
-          ...current.options.map((option) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  side: BorderSide(
-                    color: _getOptionBorderColor(option, current),
-                    width: 1.5,
-                  ),
-                  backgroundColor: _getOptionBackgroundColor(option, current),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed:
-                    _isRevealingFeedback ? null : () => _selectAnswer(option),
-                child: Text(
-                  option,
-                  style: TextStyle(
-                    color: _getOptionTextColor(option, current),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            );
-          }),
         ],
       ),
     );

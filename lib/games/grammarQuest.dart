@@ -274,93 +274,109 @@ class _GrammarQuestState extends State<GrammarQuest> {
 
     return Padding(
       padding: EdgeInsets.all(sw * 0.05),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Q ${_questionIndex + 1}/${_questions.length}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: _timeLeft <= 10 ? const Color(0xFFFFE8E8) : const Color(0xFFF0F0F0),
-                ),
-                child: Text('$_timeLeft s',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: _timeLeft <= 10 ? const Color(0xFFFF4B4B) : Colors.black,
-                    )),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Question card
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE5E5E5)),
-            ),
-            child: Column(
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 260),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) {
+          final slide = Tween<Offset>(
+            begin: const Offset(0.15, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(position: slide, child: child),
+          );
+        },
+        child: Column(
+          key: ValueKey<int>(_questionIndex),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Choose the correct answer',
-                    style: TextStyle(color: Colors.grey[700], fontSize: 14, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 10),
-                Text(current.prompt,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                Text('Q ${_questionIndex + 1}/${_questions.length}',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: _timeLeft <= 10 ? const Color(0xFFFFE8E8) : const Color(0xFFF0F0F0),
+                  ),
+                  child: Text('$_timeLeft s',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _timeLeft <= 10 ? const Color(0xFFFF4B4B) : Colors.black,
+                      )),
+                ),
               ],
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-          // Options
-          ...current.options.map((opt) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    side: BorderSide(color: _borderColor(opt, current), width: 1.5),
-                    backgroundColor: _bgColor(opt, current),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  onPressed: _isRevealingFeedback ? null : () => _selectAnswer(opt),
-                  child: Text(opt,
-                      style: TextStyle(
-                          color: _textColor(opt, current), fontSize: 16, fontWeight: FontWeight.w600)),
-                ),
-              )),
-
-          // Show explanation after revealing feedback
-          if (_isRevealingFeedback && current.explanation != null) ...[
-            const SizedBox(height: 8),
+            // Question card
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF8E1),
-                borderRadius: BorderRadius.circular(12),
+                color: const Color(0xFFF7F7F7),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE5E5E5)),
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  const Icon(Icons.lightbulb_outline, color: Color(0xFFFFA000), size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(current.explanation!,
-                        style: const TextStyle(fontSize: 13, color: Color(0xFF5D4037))),
-                  ),
+                  Text('Choose the correct answer',
+                      style: TextStyle(color: Colors.grey[700], fontSize: 14, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 10),
+                  Text(current.prompt,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
                 ],
               ),
             ),
+            const SizedBox(height: 20),
+
+            // Options
+            ...current.options.map((opt) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      side: BorderSide(color: _borderColor(opt, current), width: 1.5),
+                      backgroundColor: _bgColor(opt, current),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: _isRevealingFeedback ? null : () => _selectAnswer(opt),
+                    child: Text(opt,
+                        style: TextStyle(
+                            color: _textColor(opt, current), fontSize: 16, fontWeight: FontWeight.w600)),
+                  ),
+                )),
+
+            // Show explanation after revealing feedback
+            if (_isRevealingFeedback && current.explanation != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8E1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.lightbulb_outline, color: Color(0xFFFFA000), size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(current.explanation!,
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF5D4037))),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

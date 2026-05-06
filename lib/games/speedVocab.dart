@@ -235,20 +235,34 @@ class _SpeedVocabState extends State<SpeedVocab> {
 
   Color _getOptionBorderColor(String option, _SpeedQuestion question) {
     if (!_isRevealingFeedback) return const Color(0xFFE5E5E5);
+
+    // During reveal:
+    // - Correct option: green
+    // - If the user selected a wrong answer: that selected option: red
+    // - All other options: neutral
     if (option == question.correctAnswer) return const Color(0xFF58CC02);
-    return const Color(0xFFFF4B4B);
+    if (_selectedAnswer != null && option == _selectedAnswer) {
+      return const Color(0xFFFF4B4B);
+    }
+    return const Color(0xFFE5E5E5);
   }
 
   Color _getOptionBackgroundColor(String option, _SpeedQuestion question) {
     if (!_isRevealingFeedback) return Colors.white;
     if (option == question.correctAnswer) return const Color(0xFFE7F5E0);
-    return const Color(0xFFFFE8E8);
+    if (_selectedAnswer != null && option == _selectedAnswer) {
+      return const Color(0xFFFFE8E8);
+    }
+    return Colors.white;
   }
 
   Color _getOptionTextColor(String option, _SpeedQuestion question) {
     if (!_isRevealingFeedback) return Colors.black;
     if (option == question.correctAnswer) return const Color(0xFF2E7D32);
-    return const Color(0xFFC62828);
+    if (_selectedAnswer != null && option == _selectedAnswer) {
+      return const Color(0xFFC62828);
+    }
+    return Colors.black;
   }
 
   // ── Game Completion ───────────────────────────────────────────────────────
@@ -361,100 +375,116 @@ class _SpeedVocabState extends State<SpeedVocab> {
 
     return Padding(
       padding: EdgeInsets.all(screenWidth * 0.05),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // ── Header: Question counter + Timer pill ──────────────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Q ${_questionIndex + 1}/${_questions.length}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: _timeLeft <= 10
-                      ? const Color(0xFFFFE8E8)
-                      : const Color(0xFFF0F0F0),
-                ),
-                child: Text(
-                  '$_timeLeft s',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: _timeLeft <= 10
-                        ? const Color(0xFFFF4B4B)
-                        : Colors.black,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // ── Vocab Prompt Card ──────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE5E5E5)),
-            ),
-            child: Column(
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 260),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) {
+          final slide = Tween<Offset>(
+            begin: const Offset(0.15, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(position: slide, child: child),
+          );
+        },
+        child: Column(
+          key: ValueKey<int>(_questionIndex),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Header: Question counter + Timer pill ──────────────────────
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'What does this mean?',
-                  style: TextStyle(
-                    color: Colors.grey[700],
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  'Q ${_questionIndex + 1}/${_questions.length}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  current.prompt,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: _timeLeft <= 10
+                        ? const Color(0xFFFFE8E8)
+                        : const Color(0xFFF0F0F0),
+                  ),
+                  child: Text(
+                    '$_timeLeft s',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: _timeLeft <= 10
+                          ? const Color(0xFFFF4B4B)
+                          : Colors.black,
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-          // ── Answer Options ────────────────────────────────────────────
-          ...current.options.map((option) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  side: BorderSide(
-                    color: _getOptionBorderColor(option, current),
-                    width: 1.5,
-                  ),
-                  backgroundColor: _getOptionBackgroundColor(option, current),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed:
-                    _isRevealingFeedback ? null : () => _selectAnswer(option),
-                child: Text(
-                  option,
-                  style: TextStyle(
-                    color: _getOptionTextColor(option, current),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+            // ── Vocab Prompt Card ──────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF7F7F7),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE5E5E5)),
               ),
-            );
-          }),
-        ],
+              child: Column(
+                children: [
+                  Text(
+                    'What does this mean?',
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    current.prompt,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Answer Options ────────────────────────────────────────────
+            ...current.options.map((option) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    side: BorderSide(
+                      color: _getOptionBorderColor(option, current),
+                      width: 1.5,
+                    ),
+                    backgroundColor: _getOptionBackgroundColor(option, current),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed:
+                      _isRevealingFeedback ? null : () => _selectAnswer(option),
+                  child: Text(
+                    option,
+                    style: TextStyle(
+                      color: _getOptionTextColor(option, current),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

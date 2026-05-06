@@ -9,7 +9,7 @@ import 'package:audioplayers/audioplayers.dart';
 import '../types/games.dart';
 
 class VocabMatch extends StatefulWidget{
-  const VocabMatch({Key? key, required this.xp}) : super(key:key);
+  const VocabMatch({super.key, required this.xp});
 //Game game, double screenWidth, double screenHeight
   final int xp;
   
@@ -226,60 +226,76 @@ Widget build(BuildContext context) {
         ),
       ),
     ),
-    body: Column(
-      children: [
-        // Progress Counter - centered text above scroll view
-        Padding(
-          padding: EdgeInsets.symmetric(
-            vertical: screenHeight * 0.02,
-            horizontal: screenWidth * 0.05,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '$_matchedPairs/$_totalPairs completed',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: _progressColor,
+    body: AnimatedSwitcher(
+      duration: const Duration(milliseconds: 260),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        final slide = Tween<Offset>(
+          begin: const Offset(0.15, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(position: slide, child: child),
+        );
+      },
+      child: Column(
+        key: const ValueKey<String>('vocab_match_body'),
+        children: [
+          // Progress Counter - centered text above scroll view
+          Padding(
+            padding: EdgeInsets.symmetric(
+              vertical: screenHeight * 0.02,
+              horizontal: screenWidth * 0.05,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$_matchedPairs/$_totalPairs completed',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: _progressColor,
+                  ),
                 ),
-              ),
-              SizedBox(width: screenWidth * 0.10),
-              GameTimer(seconds: seconds, onFinish: () {
-                if(!mounted) return;
+                SizedBox(width: screenWidth * 0.10),
+                GameTimer(seconds: seconds, onFinish: () {
+                  if(!mounted) return;
 
-                if(!gameComplete) showTimesUpModal(context: context, score: _matchedPairs, total: _totalPairs);
-                }) //onFinish: () {_showTimesUpPopup(context, _matchedPairs, _totalPairs); }
-            ],
+                  if(!gameComplete) showTimesUpModal(context: context, score: _matchedPairs, total: _totalPairs);
+                  }) //onFinish: () {_showTimesUpPopup(context, _matchedPairs, _totalPairs); }
+              ],
+            ),
           ),
-        ),
-        
-        // Scrollable vocab cards
-        Expanded(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.all(screenWidth * 0.05),
-              child: ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: vocabList.length,
-                itemBuilder: (context, index) {
-                  final word = vocabList[index];
-                  return VocabCard(
-                    word: word,
-                    screenHeight: screenHeight,
-                    screenWidth: screenWidth,
-                    borderColor: _getBorderColor(word),
-                    isMatched: matchedWords.contains(word),
-                    onTap: () => _handleCardTap(word),
-                  );
-                },
+          
+          // Scrollable vocab cards
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.all(screenWidth * 0.05),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: vocabList.length,
+                  itemBuilder: (context, index) {
+                    final word = vocabList[index];
+                    return VocabCard(
+                      word: word,
+                      screenHeight: screenHeight,
+                      screenWidth: screenWidth,
+                      borderColor: _getBorderColor(word),
+                      isMatched: matchedWords.contains(word),
+                      onTap: () => _handleCardTap(word),
+                    );
+                  },
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }
