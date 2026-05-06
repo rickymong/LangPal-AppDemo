@@ -56,5 +56,6 @@ flutter:
     - assets/social_logos/
     - assets/audio/games/
     - .env
+  
   #   - images/a_dot_ham.jpeg
 
