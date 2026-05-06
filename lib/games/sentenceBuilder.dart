@@ -42,9 +42,6 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
   // ── Loading State ─────────────────────────────────────────────────────────
   /// Whether the game is still fetching questions from the API.
   bool _isLoading = true;
-  /// If the API call failed, this holds the error message for logging.
-  String? _loadError;
-
   // ── Game Session State ────────────────────────────────────────────────────
   /// Remaining seconds in this round.
   int _timeLeft = _roundDurationSeconds;
@@ -52,6 +49,12 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
   int _questionIndex = 0;
   /// Running count of correct answers.
   int _correctAnswers = 0;
+  /// Current consecutive correct answers.
+  int _streak = 0;
+  /// Best streak reached in this round.
+  int _bestStreak = 0;
+  /// Total questions answered (used for live accuracy).
+  int _totalAnswered = 0;
   /// `true` once the round is finished (timeout or all questions answered).
   bool _isFinished = false;
   /// Locks input while showing green/red color feedback on the options.
@@ -155,13 +158,11 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
         print('[SentenceBuilder] Loaded ${_questions.length} questions from Gemini API');
       } else {
         // API returned empty – fall back
-        _loadError = 'API returned no questions';
         _questions = _buildFallbackQuestions();
         print('[SentenceBuilder] Using fallback questions (API empty)');
       }
     } catch (e) {
       // Network error, timeout, etc. – fall back gracefully
-      _loadError = e.toString();
       _questions = _buildFallbackQuestions();
       print('[SentenceBuilder] Using fallback questions (error: $e)');
     }
@@ -226,10 +227,14 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
       _correctPlayer.seek(Duration.zero);
       _correctPlayer.resume();
       _correctAnswers += 1;
+      _streak += 1;
+      if (_streak > _bestStreak) _bestStreak = _streak;
     } else {
       _wrongPlayer.seek(Duration.zero);
       _wrongPlayer.resume();
+      _streak = 0;
     }
+    _totalAnswered += 1;
 
     // Show colored feedback
     setState(() {
@@ -300,28 +305,55 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
       userNotifier.completeGame(earnedXp);
     }
 
+    final accuracyPct = (_questions.isNotEmpty
+        ? (_correctAnswers / _questions.length * 100)
+        : 0.0)
+        .round();
+
     showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Round Complete'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Round Complete', textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.w700)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Score: $_correctAnswers / ${_questions.length}'),
-              const SizedBox(height: 8),
-              Text('XP Earned: $earnedXp'),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _ResultStat(label: 'Score', value: '$_correctAnswers/${_questions.length}'),
+                  _ResultStat(label: 'Accuracy', value: '$accuracyPct%',
+                      color: accuracyPct >= 80
+                          ? const Color(0xFF58CC02)
+                          : accuracyPct >= 50
+                              ? const Color(0xFFFFA000)
+                              : const Color(0xFFFF4B4B)),
+                  _ResultStat(label: 'Best Streak', value: '🔥 $_bestStreak'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE7F5E0),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text('+$earnedXp XP',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w700,
+                        color: Color(0xFF2E7D32))),
+              ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                if (mounted) {
-                  Navigator.of(context).pop();
-                }
+                if (mounted) Navigator.of(context).pop();
               },
               child: const Text('Done'),
             ),
@@ -392,15 +424,58 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Header: Question counter + Timer pill ──────────────────────
+          // ── Header: Q counter + Streak + Timer ────────────────────────
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Q ${_questionIndex + 1}/${_questions.length}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              // Left: Q counter + live accuracy
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Q ${_questionIndex + 1}/${_questions.length}',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    if (_totalAnswered > 0)
+                      Builder(builder: (_) {
+                        final pct = (_correctAnswers / _totalAnswered * 100).round();
+                        return Text(
+                          '$pct% accurate',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: pct >= 80
+                                ? const Color(0xFF58CC02)
+                                : pct >= 50
+                                    ? const Color(0xFFFFA000)
+                                    : const Color(0xFFFF4B4B),
+                          ),
+                        );
+                      }),
+                  ],
+                ),
               ),
+              // Center: Streak pill (always takes space to prevent shifting)
+              SizedBox(
+                width: 70,
+                child: Center(
+                  child: AnimatedOpacity(
+                    opacity: _streak > 0 ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF3E0),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text('🔥 $_streak',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Right: Timer pill (fixed width to prevent layout shifts)
               Container(
+                width: 64,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
@@ -408,16 +483,13 @@ class _SentenceBuilderState extends State<SentenceBuilder> {
                       ? const Color(0xFFFFE8E8)
                       : const Color(0xFFF0F0F0),
                 ),
-                child: Text(
-                  '$_timeLeft s',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: _timeLeft <= 10
-                        ? const Color(0xFFFF4B4B)
-                        : Colors.black,
-                  ),
-                ),
+                child: Text('$_timeLeft s',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: _timeLeft <= 10 ? const Color(0xFFFF4B4B) : Colors.black,
+                    )),
               ),
             ],
           ),
@@ -545,4 +617,28 @@ class _SentenceQuestion {
   final String prompt;
   final String correctAnswer;
   final List<String> options;
+}
+
+/// Small stat column shown in the results dialog.
+class _ResultStat extends StatelessWidget {
+  const _ResultStat({required this.label, required this.value, this.color});
+  final String label;
+  final String value;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(value,
+            style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: color ?? Colors.black)),
+        const SizedBox(height: 4),
+        Text(label,
+            style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      ],
+    );
+  }
 }

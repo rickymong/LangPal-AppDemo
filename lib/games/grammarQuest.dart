@@ -32,6 +32,9 @@ class _GrammarQuestState extends State<GrammarQuest> {
   int _timeLeft = _roundDurationSeconds;
   int _questionIndex = 0;
   int _correctAnswers = 0;
+  int _streak = 0;
+  int _bestStreak = 0;
+  int _totalAnswered = 0;
   bool _isFinished = false;
   bool _isRevealingFeedback = false;
   String? _selectedAnswer;
@@ -147,7 +150,14 @@ class _GrammarQuestState extends State<GrammarQuest> {
     if (_isFinished || _isRevealingFeedback) return;
 
     final current = _questions[_questionIndex];
-    if (answer == current.correctAnswer) _correctAnswers += 1;
+    if (answer == current.correctAnswer) {
+      _correctAnswers += 1;
+      _streak += 1;
+      if (_streak > _bestStreak) _bestStreak = _streak;
+    } else {
+      _streak = 0;
+    }
+    _totalAnswered += 1;
 
     setState(() {
       _selectedAnswer = answer;
@@ -205,18 +215,47 @@ class _GrammarQuestState extends State<GrammarQuest> {
 
     if (earnedXp > 0) userNotifier.completeGame(earnedXp);
 
+    final accuracyPct = (_questions.isNotEmpty
+        ? (_correctAnswers / _questions.length * 100)
+        : 0.0)
+        .round();
+
     showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        title: const Text('Quest Complete'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Quest Complete', textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.w700)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Score: $_correctAnswers / ${_questions.length}'),
-            const SizedBox(height: 8),
-            Text('XP Earned: $earnedXp'),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _ResultStat(label: 'Score', value: '$_correctAnswers/${_questions.length}'),
+                _ResultStat(label: 'Accuracy', value: '$accuracyPct%',
+                    color: accuracyPct >= 80
+                        ? const Color(0xFF58CC02)
+                        : accuracyPct >= 50
+                            ? const Color(0xFFFFA000)
+                            : const Color(0xFFFF4B4B)),
+                _ResultStat(label: 'Best Streak', value: '🔥 $_bestStreak'),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE7F5E0),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text('+$earnedXp XP',
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w700,
+                      color: Color(0xFF2E7D32))),
+            ),
           ],
         ),
         actions: [
@@ -294,17 +333,63 @@ class _GrammarQuestState extends State<GrammarQuest> {
           children: [
             // Header
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Q ${_questionIndex + 1}/${_questions.length}',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                // Left: Q counter + live accuracy
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Q ${_questionIndex + 1}/${_questions.length}',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      if (_totalAnswered > 0)
+                        Builder(builder: (_) {
+                          final pct = (_correctAnswers / _totalAnswered * 100).round();
+                          return Text(
+                            '$pct% accurate',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: pct >= 80
+                                  ? const Color(0xFF58CC02)
+                                  : pct >= 50
+                                      ? const Color(0xFFFFA000)
+                                      : const Color(0xFFFF4B4B),
+                            ),
+                          );
+                        }),
+                    ],
+                  ),
+                ),
+                // Center: Streak pill (always takes space to prevent shifting)
+                SizedBox(
+                  width: 70,
+                  child: Center(
+                    child: AnimatedOpacity(
+                      opacity: _streak > 0 ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3E0),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text('🔥 $_streak',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Right: Timer pill (fixed width to prevent layout shifts)
                 Container(
+                  width: 64,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     color: _timeLeft <= 10 ? const Color(0xFFFFE8E8) : const Color(0xFFF0F0F0),
                   ),
                   child: Text('$_timeLeft s',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -378,6 +463,27 @@ class _GrammarQuestState extends State<GrammarQuest> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ResultStat extends StatelessWidget {
+  const _ResultStat({required this.label, required this.value, this.color});
+  final String label;
+  final String value;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(value,
+            style: TextStyle(
+                fontSize: 20, fontWeight: FontWeight.w800,
+                color: color ?? Colors.black)),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      ],
     );
   }
 }
