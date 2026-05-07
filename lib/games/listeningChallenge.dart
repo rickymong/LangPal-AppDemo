@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import '../services/listening_service.dart';
 import '../userNotifier.dart';
 
+/// Listening challenge screen wired to backend `/practice/listening`,
+/// with local fallback content when backend/audio is unavailable.
 class ListeningChallenge extends StatefulWidget {
   const ListeningChallenge({super.key, required this.xp});
 
