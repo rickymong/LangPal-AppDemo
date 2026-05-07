@@ -3,6 +3,7 @@ import 'package:langpal_prototype/games/dailyChallengeTracker.dart';
 import 'package:langpal_prototype/games/sentenceBuilder.dart';
 import 'package:langpal_prototype/games/speedVocab.dart';
 import 'package:langpal_prototype/games/grammarQuest.dart';
+import 'package:langpal_prototype/games/listeningChallenge.dart';
 import 'package:langpal_prototype/games/vocabMatcher.dart';
 import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,7 @@ import '../types/games.dart';
 import '../services/sentence_builder_service.dart';
 import '../services/speed_vocab_service.dart';
 import '../services/grammar_quest_service.dart';
+import '../services/listening_service.dart';
 
 class GamesPage extends StatefulWidget {
   const GamesPage({super.key});
@@ -31,6 +33,7 @@ class _GamesPageState extends State<GamesPage> {
     SentenceBuilderService.fetchQuestions(userId: userId);
     SpeedVocabService.fetchVocabPairs(userId: userId);
     GrammarQuestService.fetchQuestions(userId: userId);
+    ListeningService.fetchPractice(userId: userId);
   }
 
   // Sample games data
@@ -78,6 +81,7 @@ class _GamesPageState extends State<GamesPage> {
       difficulty: 'Medium',
       icon: Icons.headphones,
       summary: 'Test your listening skills',
+      gamePage: ListeningChallenge(xp: 35),
     ),
   ];
 
