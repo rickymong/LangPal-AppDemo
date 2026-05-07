@@ -30,7 +30,7 @@ def _get_eleven_client() -> ElevenLabs:
         _eleven_client = ElevenLabs(api_key=api_key)
     return _eleven_client
 
-
+_gemini_model: Any | None = None
 def _get_gemini_model():
     """Lazy-init Gemini model."""
     global _gemini_model
@@ -39,7 +39,6 @@ def _get_gemini_model():
         if not api_key:
             raise RuntimeError("Set GEMINI_API_KEY in your .env file.")
         genai.configure(api_key=api_key)
-        model_name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
         _gemini_model = genai.GenerativeModel(model_name)
     return _gemini_model
 
