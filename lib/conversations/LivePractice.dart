@@ -228,7 +228,7 @@ class _LivePracticeScreenState extends State<LivePracticeScreen> {
                       ),
                     ),
                     Text(
-                      'Connected • ${turnCount} turns',
+                      'Connected • $turnCount turns',
                       style: GoogleFonts.nunito(
                         fontSize: 12,
                         color: Colors.grey[600],

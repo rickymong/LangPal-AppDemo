@@ -10,7 +10,7 @@ import 'progressBar.dart';
 
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -116,7 +116,7 @@ Widget build(BuildContext context) {
           onTap: () => {
             Navigator.push(context, MaterialPageRoute(builder: (context) => Profile()))
           },
-          child: Container(
+          child: SizedBox(
             width: 70,
             height: 70,
             // decoration: BoxDecoration(
@@ -212,7 +212,7 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildQuickActions() {
-    AiPartner dummyPartner = AiPartner(name: "Johnson", id: "999", language: "Spanish", flag_path: "assets/flags/spain_flag.jpr");
+    AiPartner dummyPartner = AiPartner(name: "Sophia", id: "ai_001", language: "Spanish", flag_path: "assets/flags/spain_flag.jpg");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

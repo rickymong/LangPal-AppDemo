@@ -58,10 +58,6 @@ class SupabaseService {
       email: email,
       password: password,
     );
-    if(response == null){
-      print("NULL SIGNINWITHPASSWORD RESPONSE");
-      print(response.toString());
-    }
     return response;
   }
 

@@ -18,7 +18,7 @@ class ConversationService {
   }) async {
     try {
       final url = Uri.parse('$backendUrl/conversation');
-      
+
       final body = {
         'user_id': userId,
         'audio_base64': audioBase64,
@@ -29,13 +29,15 @@ class ConversationService {
       print('   User: $userId');
       print('   Audio size: ${audioBase64.length} chars');
 
-      final response = await http.post(
+      final response = await http
+          .post(
         url,
         headers: {
           'Content-Type': 'application/json',
         },
         body: jsonEncode(body),
-      ).timeout(
+      )
+          .timeout(
         const Duration(seconds: 30),
         onTimeout: () {
           throw Exception('Backend request timeout');
@@ -63,8 +65,8 @@ class ConversationService {
     try {
       final url = Uri.parse('$backendUrl/');
       final response = await http.get(url).timeout(
-        const Duration(seconds: 5),
-      );
+            const Duration(seconds: 5),
+          );
       print('Backend connected: ${response.statusCode}');
       return response.statusCode == 200;
     } catch (e) {

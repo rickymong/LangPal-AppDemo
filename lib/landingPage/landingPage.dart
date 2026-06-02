@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:langpal_prototype/userAuth/accountSetup.dart/firstLangSelect.dart';
 import '../userAuth/login/loginPage.dart';
-import '../userAuth/accountSetup.dart/signupPage.dart';
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
 

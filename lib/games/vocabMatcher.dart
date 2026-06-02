@@ -6,8 +6,6 @@ import 'package:langpal_prototype/userNotifier.dart';
 import 'package:provider/provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 
-import '../types/games.dart';
-
 class VocabMatch extends StatefulWidget{
   const VocabMatch({super.key, required this.xp});
 //Game game, double screenWidth, double screenHeight
@@ -27,6 +25,9 @@ class _VocabMatchState extends State<VocabMatch> {
   String? secondSelectedWord;
   Set<String> matchedWords = {};
   Set<String> flashingWords = {};
+
+  int _streak = 0;
+  int _bestStreak = 0;
 
   final AudioPlayer correctPlayer = AudioPlayer();
   final AudioPlayer wrongPlayer = AudioPlayer();
@@ -111,19 +112,20 @@ class _VocabMatchState extends State<VocabMatch> {
     bool isMatch = (vocabPairsMap[first] == second) || (vocabPairsMap[second] == first);
     
     if (isMatch) {
-     // correctPlayer.seek(Duration.zero);
-     // correctPlayer.resume;
      correctPlayer.play(AssetSource('audio/games/vocab_match_correct.wav'));
       setState(() {
         matchedWords.add(first);
         matchedWords.add(second);
         firstSelectedWord = null;
         secondSelectedWord = null;
+        _streak += 1;
+        if (_streak > _bestStreak) _bestStreak = _streak;
       });
       _checkIfWin();
     } else {
       wrongPlayer.seek(Duration.zero);
       wrongPlayer.resume();
+      setState(() { _streak = 0; });
       setState(() {
         flashingWords.add(first);
         flashingWords.add(second);
@@ -193,7 +195,6 @@ class _VocabMatchState extends State<VocabMatch> {
 Widget build(BuildContext context) {
   final screenWidth = MediaQuery.of(context).size.width;
   final screenHeight = MediaQuery.of(context).size.height;
-  final userNotifier = context.read<UserNotifier>(); // Get it here in build
 
 //  WidgetsBinding.instance.addPostFrameCallback((_) {
 //     if (matchedWords.length == vocabList.length) {
@@ -249,25 +250,33 @@ Widget build(BuildContext context) {
               vertical: screenHeight * 0.02,
               horizontal: screenWidth * 0.05,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '$_matchedPairs/$_totalPairs completed',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: _progressColor,
-                  ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '$_matchedPairs/$_totalPairs matched',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: _progressColor,
                 ),
-                SizedBox(width: screenWidth * 0.10),
-                GameTimer(seconds: seconds, onFinish: () {
-                  if(!mounted) return;
-
-                  if(!gameComplete) showTimesUpModal(context: context, score: _matchedPairs, total: _totalPairs);
-                  }) //onFinish: () {_showTimesUpPopup(context, _matchedPairs, _totalPairs); }
-              ],
-            ),
+              ),
+              if (_streak > 1)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3E0),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text('🔥 $_streak',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                ),
+              GameTimer(seconds: seconds, onFinish: () {
+                if(!mounted) return;
+                if(!gameComplete) showTimesUpModal(context: context, score: _matchedPairs, total: _totalPairs);
+              }),
+            ],
+          ),
           ),
           
           // Scrollable vocab cards
@@ -301,11 +310,9 @@ Widget build(BuildContext context) {
 }
 
 void _showCompletionPopup(BuildContext context) {
- // _hasShownCompletion = true; // Prevent showing multiple times
-  
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: Text('Game completed! +${widget.xp} XP earned'),
+      content: Text('All matched! +${widget.xp} XP  🔥 Best streak: $_bestStreak'),
       backgroundColor: const Color(0xFF58CC02),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(

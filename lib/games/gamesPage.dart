@@ -12,7 +12,7 @@ import '../services/speed_vocab_service.dart';
 import '../services/grammar_quest_service.dart';
 
 class GamesPage extends StatefulWidget {
-  const GamesPage({Key? key}) : super(key: key);
+  const GamesPage({super.key});
 
   @override
   State<GamesPage> createState() => _GamesPageState();
